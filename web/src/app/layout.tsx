@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'NJIT Schedule Pro',
   description: 'Production-ready course schedule generator for NJIT',
+  icons: {
+    icon: '/scheduleprologo.png',
+  },
 };
 
 export default function RootLayout({

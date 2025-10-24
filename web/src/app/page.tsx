@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect } from 'react';
 import { ScheduleBuilder } from '@/components/ScheduleBuilder';
 import { useAppStore } from '@/lib/store';
@@ -29,11 +30,19 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            NJIT Schedule Pro
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Generate your perfect course schedule with smart constraint solving
+          <div className="flex justify-center">
+            <Image
+              src="/scheduleprologo.png"
+              alt="NJIT Schedule Pro logo"
+              width={612}
+              height={408}
+              className="h-32 w-auto"
+              priority
+            />
+          </div>
+          <p className="sr-only">
+            NJIT Schedule Pro - Generate your perfect course schedule with smart
+            constraint solving
           </p>
         </header>
         <ScheduleBuilder />
