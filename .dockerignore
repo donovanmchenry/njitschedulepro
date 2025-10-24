@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+ENV
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build
+dist
+build
+.next
+out
+
+# Env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs
+
+# Test
+coverage
+.coverage
+htmlcov
+.pytest_cache
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md

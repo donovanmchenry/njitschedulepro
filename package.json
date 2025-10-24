@@ -1,0 +1,23 @@
+{
+  "name": "njit-schedule-pro",
+  "version": "1.0.0",
+  "description": "Production-ready course schedule generator for NJIT",
+  "private": true,
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter api dev\" \"pnpm --filter web dev\"",
+    "build": "pnpm --filter api build && pnpm --filter web build",
+    "test": "pnpm --filter api test && pnpm --filter web test",
+    "lint": "pnpm --filter api lint && pnpm --filter web lint"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

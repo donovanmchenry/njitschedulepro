@@ -1,0 +1,125 @@
+NJIT Schedule Pro - File Structure
+===================================
+
+njitschedulepro/
+│
+├── api/                              # Backend (FastAPI + Python)
+│   ├── app/
+│   │   ├── __init__.py              # Package marker
+│   │   ├── main.py                  # FastAPI app + endpoints
+│   │   ├── models.py                # Pydantic data models
+│   │   ├── normalizer.py            # CSV parsing & normalization
+│   │   ├── solver.py                # Constraint solver (backtracking)
+│   │   └── ics_export.py            # ICS calendar generation
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── test_normalizer.py       # Normalizer unit tests (30+ tests)
+│   │   └── test_solver.py           # Solver unit tests (10+ tests)
+│   ├── pyproject.toml               # Poetry dependencies
+│   ├── package.json                 # npm scripts for Poetry
+│   └── Dockerfile                   # Backend container
+│
+├── web/                              # Frontend (Next.js + TypeScript)
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── globals.css          # Global styles + Tailwind
+│   │   │   ├── layout.tsx           # Root layout
+│   │   │   └── page.tsx             # Home page
+│   │   ├── components/
+│   │   │   ├── ScheduleBuilder.tsx  # Main container component
+│   │   │   ├── CourseSelector.tsx   # Course search & selection
+│   │   │   ├── AvailabilityEditor.tsx # Time constraint editor
+│   │   │   ├── FiltersPanel.tsx     # Filters & preferences
+│   │   │   ├── ScheduleView.tsx     # Calendar grid display
+│   │   │   └── ScheduleList.tsx     # All schedules list
+│   │   ├── lib/
+│   │   │   ├── store.ts             # Zustand state management
+│   │   │   └── utils.ts             # Utility functions
+│   │   └── types/
+│   │       └── index.ts             # TypeScript type definitions
+│   ├── public/                       # Static assets
+│   ├── package.json                  # pnpm dependencies
+│   ├── tsconfig.json                 # TypeScript config
+│   ├── next.config.js                # Next.js config
+│   ├── tailwind.config.ts            # Tailwind config
+│   ├── postcss.config.js             # PostCSS config
+│   ├── .eslintrc.json                # ESLint config
+│   ├── next-env.d.ts                 # Next.js type definitions
+│   └── Dockerfile                    # Frontend container
+│
+├── courseschedules/                  # CSV data directory
+│   ├── Course_Schedule_202610_CS_*.csv
+│   ├── Course_Schedule_202610_MATH_*.csv
+│   └── ... (75+ CSV files)
+│
+├── uploads/                          # User-uploaded CSVs (future)
+│   └── .gitkeep
+│
+├── docker-compose.yml                # Docker orchestration
+├── .dockerignore                     # Docker ignore rules
+├── package.json                      # Root monorepo config
+├── pnpm-workspace.yaml               # pnpm workspace config
+├── .gitignore                        # Git ignore rules
+├── .env.example                      # Environment variables template
+│
+├── README.md                         # Main documentation
+├── QUICKSTART.md                     # Quick start guide
+├── PROJECT_SUMMARY.md                # Detailed project overview
+├── ARCHITECTURE.md                   # Architecture diagrams
+└── STRUCTURE.txt                     # This file
+
+Key Files Summary
+=================
+
+Backend Core (Python):
+- main.py         : FastAPI app with 7 endpoints
+- models.py       : 15+ Pydantic models with validation
+- normalizer.py   : CSV parsing (10+ functions)
+- solver.py       : Backtracking solver (~300 lines)
+- ics_export.py   : ICS calendar generation
+
+Frontend Core (TypeScript):
+- ScheduleBuilder : Main application container
+- CourseSelector  : Search & select courses
+- AvailabilityEditor : Time constraints
+- ScheduleView    : Interactive calendar grid
+- store.ts        : Global state management
+
+Tests:
+- test_normalizer.py : 30+ unit tests
+- test_solver.py     : 10+ integration tests
+
+Documentation:
+- README.md         : Complete user guide
+- QUICKSTART.md     : 5-minute setup
+- PROJECT_SUMMARY.md: Technical overview
+- ARCHITECTURE.md   : System design
+
+Lines of Code
+=============
+Backend:    ~2,000 lines Python
+Frontend:   ~1,500 lines TypeScript/TSX
+Tests:      ~800 lines
+Total:      ~4,300 lines
+
+Dependencies
+============
+Backend:
+- fastapi (API framework)
+- uvicorn (ASGI server)
+- pydantic (validation)
+- pandas (CSV processing)
+- icalendar (ICS export)
+- pytest (testing)
+
+Frontend:
+- next (framework)
+- react (UI library)
+- zustand (state management)
+- tailwindcss (styling)
+- typescript (type safety)
+
+Docker Images:
+- python:3.11-slim (backend base)
+- node:18-alpine (frontend base)
+
