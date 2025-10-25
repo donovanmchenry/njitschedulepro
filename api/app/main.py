@@ -215,10 +215,13 @@ async def get_courses(search: Optional[str] = None):
             course_map[offering.course_key] = {
                 "course_key": offering.course_key,
                 "title": offering.title,
-                "sections": [],
+                "sections": {},  # Changed to dict to group by CRN
             }
-        course_map[offering.course_key]["sections"].append(
-            {
+
+        # Group sections by CRN to avoid duplicates
+        crn = offering.crn
+        if crn not in course_map[offering.course_key]["sections"]:
+            course_map[offering.course_key]["sections"][crn] = {
                 "crn": offering.crn,
                 "section": offering.section,
                 "status": offering.status.value,
@@ -226,9 +229,12 @@ async def get_courses(search: Optional[str] = None):
                 "instructor": offering.instructor,
                 "credits": offering.credits,
             }
-        )
 
-    courses = list(course_map.values())
+    # Convert sections dict back to list
+    courses = []
+    for course_data in course_map.values():
+        course_data["sections"] = list(course_data["sections"].values())
+        courses.append(course_data)
 
     if search:
         search_lower = search.lower()

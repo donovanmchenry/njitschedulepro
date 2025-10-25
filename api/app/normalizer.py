@@ -314,6 +314,47 @@ def deduplicate_offerings(offerings: List[Offering]) -> List[Offering]:
     return unique
 
 
+def merge_offerings_by_crn(offerings: List[Offering]) -> List[Offering]:
+    """
+    Merge offerings with the same CRN by combining their meetings.
+
+    When a section has multiple rows in the CSV (e.g., meets Tue and Thu separately),
+    this merges them into a single offering with all meetings.
+
+    Args:
+        offerings: List of offerings that may have duplicate CRNs
+
+    Returns:
+        List with offerings merged by CRN
+    """
+    crn_map: Dict[str, Offering] = {}
+
+    for offering in offerings:
+        crn = offering.crn
+
+        if crn not in crn_map:
+            # First occurrence of this CRN
+            crn_map[crn] = offering
+        else:
+            # Merge meetings from this offering into the existing one
+            existing = crn_map[crn]
+
+            # Add meetings that aren't already present
+            for meeting in offering.meetings:
+                # Check if this exact meeting already exists
+                meeting_exists = any(
+                    m.day == meeting.day and
+                    m.start_min == meeting.start_min and
+                    m.end_min == meeting.end_min
+                    for m in existing.meetings
+                )
+
+                if not meeting_exists:
+                    existing.meetings.append(meeting)
+
+    return list(crn_map.values())
+
+
 def normalize_multiple_csvs(file_paths: List[str]) -> List[Offering]:
     """
     Normalize multiple CSV files and merge into a single catalog.
@@ -330,5 +371,8 @@ def normalize_multiple_csvs(file_paths: List[str]) -> List[Offering]:
         offerings = normalize_csv(path)
         all_offerings.extend(offerings)
 
-    # Deduplicate
-    return deduplicate_offerings(all_offerings)
+    # Merge offerings with same CRN (sections with multiple meeting times)
+    merged = merge_offerings_by_crn(all_offerings)
+
+    # Deduplicate any remaining duplicates
+    return deduplicate_offerings(merged)
