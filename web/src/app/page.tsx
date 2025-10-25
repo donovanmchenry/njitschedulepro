@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Image from 'next/image';
 import { ScheduleBuilder } from '@/components/ScheduleBuilder';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
 
@@ -30,6 +31,9 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <header className="mb-8 text-center">
           <div className="flex justify-center">
             <Image

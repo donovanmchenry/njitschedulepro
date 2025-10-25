@@ -23,7 +23,7 @@ export function FiltersPanel() {
     <div className="space-y-4">
       {/* Status filters */}
       <div>
-        <label className="block text-sm font-medium mb-2">Section Status</label>
+        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Section Status</label>
         <div className="flex flex-wrap gap-2">
           {(['Open', 'Waitlist', 'Closed'] as Status[]).map((status) => {
             const isSelected = filters.status?.includes(status);
@@ -34,7 +34,7 @@ export function FiltersPanel() {
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   isSelected
                     ? 'bg-njit-red text-white'
-                    : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70'
+                    : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
                 }`}
               >
                 {status}
@@ -47,7 +47,7 @@ export function FiltersPanel() {
       {/* Credits */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium mb-1">Min Credits</label>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-200">Min Credits</label>
           <input
             type="number"
             min="0"
@@ -57,11 +57,11 @@ export function FiltersPanel() {
               setMinCredits(e.target.value ? Number(e.target.value) : undefined)
             }
             placeholder="None"
-            className="w-full px-3 py-2 border rounded-lg"
+            className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Max Credits</label>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-200">Max Credits</label>
           <input
             type="number"
             min="0"
@@ -71,14 +71,14 @@ export function FiltersPanel() {
               setMaxCredits(e.target.value ? Number(e.target.value) : undefined)
             }
             placeholder="None"
-            className="w-full px-3 py-2 border rounded-lg"
+            className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
           />
         </div>
       </div>
 
       {/* Max gap */}
       <div>
-        <label className="block text-sm font-medium mb-1">Max Gap Between Classes (min)</label>
+        <label className="block text-sm font-medium mb-1 dark:text-gray-200">Max Gap Between Classes (min)</label>
         <input
           type="number"
           min="0"
@@ -91,13 +91,13 @@ export function FiltersPanel() {
             })
           }
           placeholder="Unlimited"
-          className="w-full px-3 py-2 border rounded-lg"
+          className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
         />
       </div>
 
       {/* Honors filter */}
       <div>
-        <label className="block text-sm font-medium mb-2">Section Type</label>
+        <label className="block text-sm font-medium mb-2 dark:text-gray-200">Section Type</label>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() =>
@@ -108,7 +108,7 @@ export function FiltersPanel() {
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               filters.include_honors ?? true
                 ? 'bg-njit-navy text-white'
-                : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70'
+                : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
             }`}
           >
             Honors (H##)
@@ -122,7 +122,7 @@ export function FiltersPanel() {
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               filters.include_non_honors ?? true
                 ? 'bg-njit-red text-white'
-                : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70'
+                : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
             }`}
           >
             Regular

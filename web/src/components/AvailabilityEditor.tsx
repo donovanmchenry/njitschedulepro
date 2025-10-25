@@ -42,11 +42,11 @@ export function AvailabilityEditor() {
       {/* Add availability block */}
       <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-3">
         <div>
-          <label className="block text-sm font-medium mb-1">Day</label>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-200">Day</label>
           <select
             value={selectedDay}
             onChange={(e) => setSelectedDay(e.target.value as DayOfWeek)}
-            className="w-full px-3 py-2 border rounded-lg"
+            className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
           >
             {DAYS.map((day) => (
               <option key={day} value={day}>
@@ -58,28 +58,28 @@ export function AvailabilityEditor() {
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="block text-sm font-medium mb-1">From</label>
+            <label className="block text-sm font-medium mb-1 dark:text-gray-200">From</label>
             <input
               type="time"
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">To</label>
+            <label className="block text-sm font-medium mb-1 dark:text-gray-200">To</label>
             <input
               type="time"
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
             />
           </div>
         </div>
 
         <button
           onClick={handleAddBlock}
-          className="w-full bg-njit-navy hover:bg-njit-navy/90 text-white py-2 px-4 rounded-lg text-sm transition-colors"
+          className="w-full bg-njit-navy hover:bg-njit-navy/90 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm transition-colors"
         >
           Add Unavailable Time
         </button>
@@ -88,14 +88,14 @@ export function AvailabilityEditor() {
       {/* Existing blocks */}
       <div className="space-y-2">
         {unavailableBlocks.length === 0 ? (
-          <p className="text-sm text-gray-500 italic">No constraints set</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 italic">No constraints set</p>
         ) : (
           unavailableBlocks.map((block, index) => (
             <div
               key={index}
-              className="flex items-center justify-between bg-red-100 dark:bg-red-900 px-3 py-2 rounded-lg"
+              className="flex items-center justify-between bg-red-100 dark:bg-red-900/40 px-3 py-2 rounded-lg border border-red-200 dark:border-red-700"
             >
-              <div className="text-sm">
+              <div className="text-sm dark:text-red-100">
                 <span className="font-semibold">{DAY_NAMES[block.day]}</span>
                 <span className="mx-2">•</span>
                 <span>
@@ -104,7 +104,7 @@ export function AvailabilityEditor() {
               </div>
               <button
                 onClick={() => removeUnavailableBlock(index)}
-                className="text-red-700 hover:text-red-900 dark:text-red-300"
+                className="text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-200"
               >
                 <X size={18} />
               </button>

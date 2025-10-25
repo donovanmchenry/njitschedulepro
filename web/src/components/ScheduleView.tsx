@@ -192,6 +192,11 @@ export function ScheduleView() {
                             >
                               <div className="font-bold">{offering.course_key}</div>
                               <div className="text-xs truncate">{offering.section}</div>
+                              {offering.instructor && offering.instructor !== 'nan' && (
+                                <div className="text-xs truncate font-medium">
+                                  {offering.instructor}
+                                </div>
+                              )}
                               <div className="text-xs">
                                 {minutesToTime(meeting.start_min)}-
                                 {minutesToTime(meeting.end_min)}
