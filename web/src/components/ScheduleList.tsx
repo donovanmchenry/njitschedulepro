@@ -26,8 +26,8 @@ export function ScheduleList() {
               onClick={() => setSelectedScheduleIndex(index)}
               className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
                 isSelected
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
-                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'border-njit-red bg-red-50 dark:bg-njit-navy/50'
+                  : 'border-njit-gray dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               <div className="flex items-center justify-between mb-1">

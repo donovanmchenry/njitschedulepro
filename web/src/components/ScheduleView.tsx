@@ -3,6 +3,7 @@
 import { useAppStore } from '@/lib/store';
 import { DAYS, DAY_NAMES, minutesToTime } from '@/types';
 import { Download, BookmarkPlus } from 'lucide-react';
+import { apiUrl } from '@/lib/api';
 
 const COLORS = [
   'bg-blue-200 border-blue-400 text-blue-900',
@@ -53,7 +54,7 @@ export function ScheduleView() {
 
   const handleDownloadICS = async () => {
     try {
-      const response = await fetch('/api/export/ics', {
+      const response = await fetch(apiUrl('/export/ics'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedule),
@@ -75,7 +76,7 @@ export function ScheduleView() {
 
   const handleDownloadCSV = async () => {
     try {
-      const response = await fetch('/api/export/csv', {
+      const response = await fetch(apiUrl('/export/csv'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedule),
@@ -110,21 +111,21 @@ export function ScheduleView() {
         <div className="flex gap-2">
           <button
             onClick={() => addBookmark(schedule)}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm"
+            className="flex items-center gap-2 px-3 py-2 bg-njit-navy/10 hover:bg-njit-navy/20 text-njit-navy dark:bg-njit-gray/20 dark:text-njit-gray rounded-lg text-sm transition-colors"
           >
             <BookmarkPlus size={16} />
             Bookmark
           </button>
           <button
             onClick={handleDownloadICS}
-            className="flex items-center gap-2 px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm"
+            className="flex items-center gap-2 px-3 py-2 bg-njit-red/10 hover:bg-njit-red/20 text-njit-red dark:bg-njit-red/30 dark:text-red-300 rounded-lg text-sm transition-colors"
           >
             <Download size={16} />
             ICS
           </button>
           <button
             onClick={handleDownloadCSV}
-            className="flex items-center gap-2 px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-sm"
+            className="flex items-center gap-2 px-3 py-2 bg-njit-gray/30 hover:bg-njit-gray/50 text-gray-700 dark:bg-gray-700 dark:text-njit-gray rounded-lg text-sm transition-colors"
           >
             <Download size={16} />
             CSV

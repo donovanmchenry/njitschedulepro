@@ -33,8 +33,8 @@ export function FiltersPanel() {
                 onClick={() => toggleStatus(status)}
                 className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                   isSelected
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-njit-red text-white'
+                    : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70'
                 }`}
               >
                 {status}
@@ -107,8 +107,8 @@ export function FiltersPanel() {
             }
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               filters.include_honors ?? true
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-njit-navy text-white'
+                : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70'
             }`}
           >
             Honors (H##)
@@ -121,8 +121,8 @@ export function FiltersPanel() {
             }
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               filters.include_non_honors ?? true
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                ? 'bg-njit-red text-white'
+                : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70'
             }`}
           >
             Regular

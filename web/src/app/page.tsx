@@ -1,9 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect } from 'react';
+import Image from 'next/image';
 import { ScheduleBuilder } from '@/components/ScheduleBuilder';
 import { useAppStore } from '@/lib/store';
+import { apiUrl } from '@/lib/api';
 
 export default function Home() {
   const { setCourses, setIsLoading } = useAppStore();
@@ -13,7 +14,7 @@ export default function Home() {
     const loadCourses = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/catalog/courses');
+        const response = await fetch(apiUrl('/catalog/courses'));
         const data = await response.json();
         setCourses(data.courses || []);
       } catch (error) {

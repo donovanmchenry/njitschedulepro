@@ -79,7 +79,7 @@ export function AvailabilityEditor() {
 
         <button
           onClick={handleAddBlock}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg text-sm"
+          className="w-full bg-njit-navy hover:bg-njit-navy/90 text-white py-2 px-4 rounded-lg text-sm transition-colors"
         >
           Add Unavailable Time
         </button>

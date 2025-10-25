@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useAppStore } from '@/lib/store';
 import { CourseSelector } from './CourseSelector';
 import { AvailabilityEditor } from './AvailabilityEditor';
 import { FiltersPanel } from './FiltersPanel';
 import { ScheduleView } from './ScheduleView';
 import { ScheduleList } from './ScheduleList';
 import { SolveRequest } from '@/types';
+import { useAppStore } from '@/lib/store';
+import { apiUrl } from '@/lib/api';
 
 export function ScheduleBuilder() {
   const {
@@ -43,7 +44,7 @@ export function ScheduleBuilder() {
     };
 
     try {
-      const response = await fetch('/api/solve', {
+      const response = await fetch(apiUrl('/solve'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(request),
@@ -107,7 +108,7 @@ export function ScheduleBuilder() {
             <button
               onClick={handleGenerateSchedules}
               disabled={isLoading || selectedCourseKeys.length === 0}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+              className="w-full bg-njit-red hover:bg-red-700 disabled:bg-njit-gray text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"
             >
               {isLoading ? 'Generating...' : 'Generate Schedules'}
             </button>
