@@ -152,7 +152,7 @@ def normalize_delivery(delivery_str: str, location: str = "") -> DeliveryMode:
 
 def extract_course_key(course_str: str) -> str:
     """
-    Extract course key (e.g., 'CS 100') from course string.
+    Extract course key (e.g., 'CS 100', 'PHYS 111A') from course string.
 
     Args:
         course_str: Course identifier from CSV
@@ -163,13 +163,14 @@ def extract_course_key(course_str: str) -> str:
     if not course_str:
         return ""
 
-    # Extract subject code and catalog number
-    # Patterns: "CS100", "CS 100", "ACCT115", etc.
-    match = re.match(r"([A-Z]+)\s*(\d+)", course_str.strip().upper())
+    # Extract subject code, catalog number, and optional suffix (like A for labs)
+    # Patterns: "CS100", "CS 100", "ACCT115", "PHYS111A", etc.
+    match = re.match(r"([A-Z]+)\s*(\d+)([A-Z]*)", course_str.strip().upper())
     if match:
         subject = match.group(1)
         catalog = match.group(2)
-        return f"{subject} {catalog}"
+        suffix = match.group(3)
+        return f"{subject} {catalog}{suffix}"
 
     return course_str.strip().upper()
 
