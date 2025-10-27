@@ -6,9 +6,13 @@ import { AvailabilityEditor } from './AvailabilityEditor';
 import { FiltersPanel } from './FiltersPanel';
 import { ScheduleView } from './ScheduleView';
 import { ScheduleList } from './ScheduleList';
-import { SolveRequest } from '@/types';
+import { BookmarkedSchedules } from './BookmarkedSchedules';
+import { SolveRequest, Schedule } from '@/types';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
+import { Calendar, Bookmark } from 'lucide-react';
+
+type Tab = 'generated' | 'bookmarks';
 
 export function ScheduleBuilder() {
   const {
@@ -21,9 +25,15 @@ export function ScheduleBuilder() {
     setSchedules,
     isLoading,
     setIsLoading,
+    bookmarkedSchedules,
   } = useAppStore();
 
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('generated');
+  const [selectedBookmark, setSelectedBookmark] = useState<{
+    schedule: Schedule;
+    index: number;
+  } | null>(null);
 
   const handleGenerateSchedules = async () => {
     if (selectedCourseKeys.length === 0) {
@@ -124,33 +134,82 @@ export function ScheduleBuilder() {
 
       {/* Right panels - Results */}
       <div className="lg:col-span-2 space-y-4">
-        {schedules.length > 0 ? (
-          <>
-            <ScheduleView />
-            <ScheduleList />
-          </>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 text-center">
-            <div className="text-gray-400 dark:text-gray-500">
-              <svg
-                className="mx-auto h-24 w-24 mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <p className="text-xl font-semibold mb-2">No Schedules Yet</p>
-              <p className="text-sm">
-                Select your courses and constraints, then generate schedules to see them here.
-              </p>
+        {/* Tab Navigation */}
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setActiveTab('generated')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors border-b-2 ${
+              activeTab === 'generated'
+                ? 'border-njit-red text-njit-red dark:text-red-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+            }`}
+          >
+            <Calendar size={18} />
+            Generated Schedules
+            {schedules.length > 0 && (
+              <span className="ml-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
+                {schedules.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('bookmarks')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors border-b-2 ${
+              activeTab === 'bookmarks'
+                ? 'border-njit-red text-njit-red dark:text-red-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+            }`}
+          >
+            <Bookmark size={18} />
+            Bookmarks
+            {bookmarkedSchedules.length > 0 && (
+              <span className="ml-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
+                {bookmarkedSchedules.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'generated' ? (
+          schedules.length > 0 ? (
+            <>
+              <ScheduleView />
+              <ScheduleList />
+            </>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 text-center">
+              <div className="text-gray-400 dark:text-gray-500">
+                <svg
+                  className="mx-auto h-24 w-24 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <p className="text-xl font-semibold mb-2">No Schedules Yet</p>
+                <p className="text-sm">
+                  Select your courses and constraints, then generate schedules to see them here.
+                </p>
+              </div>
             </div>
-          </div>
+          )
+        ) : (
+          <>
+            {selectedBookmark && <ScheduleView schedule={selectedBookmark.schedule} />}
+            <BookmarkedSchedules
+              onSelectBookmark={(schedule, index) =>
+                setSelectedBookmark({ schedule, index })
+              }
+              selectedBookmarkIndex={selectedBookmark?.index}
+            />
+          </>
         )}
       </div>
     </div>

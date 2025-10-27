@@ -3,6 +3,7 @@
  */
 
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import {
   AvailabilityBlock,
   Course,
@@ -55,69 +56,80 @@ interface AppState {
   removeBookmark: (index: number) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  // Catalog
-  courses: [],
-  setCourses: (courses) => set({ courses }),
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      // Catalog
+      courses: [],
+      setCourses: (courses) => set({ courses }),
 
-  // Selected courses
-  selectedCourseKeys: [],
-  addCourse: (courseKey) =>
-    set((state) => ({
-      selectedCourseKeys: [...state.selectedCourseKeys, courseKey],
-    })),
-  removeCourse: (courseKey) =>
-    set((state) => ({
-      selectedCourseKeys: state.selectedCourseKeys.filter((k) => k !== courseKey),
-    })),
+      // Selected courses
+      selectedCourseKeys: [],
+      addCourse: (courseKey) =>
+        set((state) => ({
+          selectedCourseKeys: [...state.selectedCourseKeys, courseKey],
+        })),
+      removeCourse: (courseKey) =>
+        set((state) => ({
+          selectedCourseKeys: state.selectedCourseKeys.filter((k) => k !== courseKey),
+        })),
 
-  // Availability blocks
-  unavailableBlocks: [],
-  addUnavailableBlock: (block) =>
-    set((state) => ({
-      unavailableBlocks: [...state.unavailableBlocks, block],
-    })),
-  removeUnavailableBlock: (index) =>
-    set((state) => ({
-      unavailableBlocks: state.unavailableBlocks.filter((_, i) => i !== index),
-    })),
-  clearUnavailableBlocks: () => set({ unavailableBlocks: [] }),
+      // Availability blocks
+      unavailableBlocks: [],
+      addUnavailableBlock: (block) =>
+        set((state) => ({
+          unavailableBlocks: [...state.unavailableBlocks, block],
+        })),
+      removeUnavailableBlock: (index) =>
+        set((state) => ({
+          unavailableBlocks: state.unavailableBlocks.filter((_, i) => i !== index),
+        })),
+      clearUnavailableBlocks: () => set({ unavailableBlocks: [] }),
 
-  // Filters
-  filters: {
-    status: ['Open' as Status],
-  },
-  updateFilters: (filters) =>
-    set((state) => ({
-      filters: { ...state.filters, ...filters },
-    })),
+      // Filters
+      filters: {
+        status: ['Open' as Status],
+      },
+      updateFilters: (filters) =>
+        set((state) => ({
+          filters: { ...state.filters, ...filters },
+        })),
 
-  // Credits
-  minCredits: undefined,
-  maxCredits: undefined,
-  setMinCredits: (value) => set({ minCredits: value }),
-  setMaxCredits: (value) => set({ maxCredits: value }),
+      // Credits
+      minCredits: undefined,
+      maxCredits: undefined,
+      setMinCredits: (value) => set({ minCredits: value }),
+      setMaxCredits: (value) => set({ maxCredits: value }),
 
-  // Generated schedules
-  schedules: [],
-  setSchedules: (schedules) => set({ schedules, selectedScheduleIndex: 0 }),
+      // Generated schedules
+      schedules: [],
+      setSchedules: (schedules) => set({ schedules, selectedScheduleIndex: 0 }),
 
-  // Selected schedule
-  selectedScheduleIndex: 0,
-  setSelectedScheduleIndex: (index) => set({ selectedScheduleIndex: index }),
+      // Selected schedule
+      selectedScheduleIndex: 0,
+      setSelectedScheduleIndex: (index) => set({ selectedScheduleIndex: index }),
 
-  // Loading
-  isLoading: false,
-  setIsLoading: (loading) => set({ isLoading: loading }),
+      // Loading
+      isLoading: false,
+      setIsLoading: (loading) => set({ isLoading: loading }),
 
-  // Bookmarks
-  bookmarkedSchedules: [],
-  addBookmark: (schedule) =>
-    set((state) => ({
-      bookmarkedSchedules: [...state.bookmarkedSchedules, schedule],
-    })),
-  removeBookmark: (index) =>
-    set((state) => ({
-      bookmarkedSchedules: state.bookmarkedSchedules.filter((_, i) => i !== index),
-    })),
-}));
+      // Bookmarks
+      bookmarkedSchedules: [],
+      addBookmark: (schedule) =>
+        set((state) => ({
+          bookmarkedSchedules: [...state.bookmarkedSchedules, schedule],
+        })),
+      removeBookmark: (index) =>
+        set((state) => ({
+          bookmarkedSchedules: state.bookmarkedSchedules.filter((_, i) => i !== index),
+        })),
+    }),
+    {
+      name: 'njit-schedule-pro-storage',
+      // Only persist bookmarks, not temporary state
+      partialize: (state) => ({
+        bookmarkedSchedules: state.bookmarkedSchedules,
+      }),
+    }
+  )
+);

@@ -16,9 +16,13 @@ const COLORS = [
   'bg-teal-200 border-teal-400 text-teal-900',
 ];
 
-export function ScheduleView() {
+interface ScheduleViewProps {
+  schedule?: import('@/types').Schedule;
+}
+
+export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {}) {
   const { schedules, selectedScheduleIndex, addBookmark } = useAppStore();
-  const schedule = schedules[selectedScheduleIndex];
+  const schedule = propSchedule || schedules[selectedScheduleIndex];
 
   if (!schedule) return null;
 
@@ -96,26 +100,30 @@ export function ScheduleView() {
     }
   };
 
+  const isBookmarkedView = !!propSchedule;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-            Schedule {selectedScheduleIndex + 1}
+            {isBookmarkedView ? 'Saved Schedule' : `Schedule ${selectedScheduleIndex + 1}`}
           </h2>
           <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
             <span>{schedule.total_credits} credits</span>
           </div>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => addBookmark(schedule)}
-            className="flex items-center gap-2 px-3 py-2 bg-njit-navy/10 hover:bg-njit-navy/20 text-njit-navy dark:bg-njit-gray/20 dark:text-njit-gray rounded-lg text-sm transition-colors"
-          >
-            <BookmarkPlus size={16} />
-            Bookmark
-          </button>
+          {!isBookmarkedView && (
+            <button
+              onClick={() => addBookmark(schedule)}
+              className="flex items-center gap-2 px-3 py-2 bg-njit-navy/10 hover:bg-njit-navy/20 text-njit-navy dark:bg-njit-gray/20 dark:text-njit-gray rounded-lg text-sm transition-colors"
+            >
+              <BookmarkPlus size={16} />
+              Bookmark
+            </button>
+          )}
           <button
             onClick={handleDownloadICS}
             className="flex items-center gap-2 px-3 py-2 bg-njit-red/10 hover:bg-njit-red/20 text-njit-red dark:bg-njit-red/30 dark:text-red-300 rounded-lg text-sm transition-colors"
