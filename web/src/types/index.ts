@@ -55,6 +55,8 @@ export interface ScheduleFilters {
 export interface SolveRequest {
   required_course_keys: string[];
   optional_course_keys?: string[];
+  required_crns?: string[];
+  preferred_professors?: Record<string, string[]>;
   min_credits?: number;
   max_credits?: number;
   unavailable: AvailabilityBlock[];

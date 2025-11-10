@@ -160,7 +160,7 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
             ))}
 
             {/* Time slots */}
-            {timeSlots.map((time) => (
+            {timeSlots.map((time, timeIndex) => (
               <div key={time} className="contents">
                 {/* Time label */}
                 <div className="text-xs text-gray-500 py-1 pr-2 text-right">
@@ -169,54 +169,53 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
 
                 {/* Day columns */}
                 {DAYS.map((day) => {
-                  // Find meetings for this day and time slot
-                  const meetings = schedule.offerings.flatMap((offering) =>
-                    offering.meetings
-                      .filter(
-                        (m) =>
-                          m.day === day && m.start_min < time + 60 && m.end_min > time
-                      )
-                      .map((m) => ({ offering, meeting: m }))
-                  );
-
                   return (
                     <div
                       key={day}
-                      className="border border-gray-200 dark:border-gray-700 min-h-[60px] p-1 relative"
+                      className="border border-gray-200 dark:border-gray-700 min-h-[60px] relative"
+                      style={{ height: '60px' }}
                     >
-                      {meetings.map(({ offering, meeting }) => {
-                        // Only render on the first slot
-                        if (meeting.start_min >= time && meeting.start_min < time + 60) {
-                          const duration = meeting.end_min - meeting.start_min;
-                          const height = Math.max((duration / 60) * 60, 40);
-                          const color = courseColorMap.get(offering.course_key);
+                      {/* Only render courses in the first time slot (to avoid duplicates) */}
+                      {timeIndex === 0 && schedule.offerings.flatMap((offering) =>
+                        offering.meetings
+                          .filter((m) => m.day === day)
+                          .map((meeting) => {
+                            const color = courseColorMap.get(offering.course_key);
 
-                          return (
-                            <div
-                              key={offering.crn}
-                              className={`${color} border-2 rounded p-2 mb-1 text-xs overflow-hidden`}
-                              style={{ minHeight: `${height}px` }}
-                              title={`${offering.course_key} - ${offering.title}\n${offering.instructor || 'TBA'}\n${meeting.location || 'TBA'}`}
-                            >
-                              <div className="font-bold">{offering.course_key}</div>
-                              <div className="text-xs truncate">{offering.section}</div>
-                              {offering.instructor && offering.instructor !== 'nan' && (
-                                <div className="text-xs truncate font-medium">
-                                  {offering.instructor}
+                            // Calculate position relative to earliest time
+                            const topOffset = (meeting.start_min - earliestTime);
+                            const duration = meeting.end_min - meeting.start_min;
+                            const height = Math.max(duration, 40); // minimum 40 minutes
+
+                            return (
+                              <div
+                                key={offering.crn}
+                                className={`${color} border-2 rounded p-2 text-xs overflow-hidden absolute left-1 right-1`}
+                                style={{
+                                  top: `${topOffset}px`,
+                                  height: `${height}px`,
+                                  zIndex: 10
+                                }}
+                                title={`${offering.course_key} - ${offering.title}\n${offering.instructor || 'TBA'}\n${meeting.location || 'TBA'}`}
+                              >
+                                <div className="font-bold">{offering.course_key}</div>
+                                <div className="text-xs truncate">{offering.section}</div>
+                                {offering.instructor && offering.instructor !== 'nan' && (
+                                  <div className="text-xs truncate font-medium">
+                                    {offering.instructor}
+                                  </div>
+                                )}
+                                <div className="text-xs">
+                                  {minutesToTime(meeting.start_min)}-
+                                  {minutesToTime(meeting.end_min)}
                                 </div>
-                              )}
-                              <div className="text-xs">
-                                {minutesToTime(meeting.start_min)}-
-                                {minutesToTime(meeting.end_min)}
+                                {meeting.location && (
+                                  <div className="text-xs truncate">{meeting.location}</div>
+                                )}
                               </div>
-                              {meeting.location && (
-                                <div className="text-xs truncate">{meeting.location}</div>
-                              )}
-                            </div>
-                          );
-                        }
-                        return null;
-                      })}
+                            );
+                          })
+                      )}
                     </div>
                   );
                 })}

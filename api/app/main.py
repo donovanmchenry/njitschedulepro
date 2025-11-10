@@ -5,13 +5,20 @@ import os
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
+from app.ai_parser import AIParseRequest, parse_natural_language
 from app.ics_export import generate_ics
 from app.models import Offering, Schedule, SolveRequest, SolveResponse
 from app.normalizer import normalize_csv, normalize_multiple_csvs
+from app.rate_limiter import check_rate_limit, get_global_stats, get_usage_stats, increment_usage
 from app.solver import solve_schedules
 
 app = FastAPI(
@@ -281,6 +288,82 @@ async def solve(request: SolveRequest):
         catalog_course_count=unique_courses,
         catalog_section_count=len(catalog),
     )
+
+
+@app.post("/ai/parse-schedule")
+async def ai_parse_schedule(parse_request: AIParseRequest, request: Request):
+    """
+    Parse natural language schedule description into structured constraints using AI.
+
+    Args:
+        parse_request: Contains user prompt and optional API key
+        request: FastAPI request object (for IP address)
+
+    Returns:
+        Parsed constraints and usage information
+    """
+    # Get client IP
+    client_ip = request.client.host if request.client else "unknown"
+
+    # Check if user is providing their own API key
+    use_user_key = parse_request.user_api_key is not None
+
+    # Check rate limits (skip if using own key)
+    allowed, error_msg = check_rate_limit(client_ip, use_user_key)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=error_msg)
+
+    try:
+        # Parse using AI
+        result = await parse_natural_language(
+            parse_request.prompt, parse_request.user_api_key
+        )
+
+        # Increment usage counter
+        increment_usage(client_ip, use_user_key)
+
+        # Get updated usage stats
+        usage_stats = get_usage_stats(client_ip)
+
+        return {
+            "success": True,
+            "constraints": result.constraints.model_dump(),
+            "confidence": result.confidence,
+            "usage": usage_stats,
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error parsing schedule: {str(e)}"
+        )
+
+
+@app.get("/ai/usage")
+async def get_ai_usage(request: Request):
+    """
+    Get AI usage statistics for the current user.
+
+    Args:
+        request: FastAPI request object (for IP address)
+
+    Returns:
+        Usage statistics
+    """
+    client_ip = request.client.host if request.client else "unknown"
+    return get_usage_stats(client_ip)
+
+
+@app.get("/ai/global-stats")
+async def get_ai_global_stats():
+    """
+    Get global AI usage statistics (admin endpoint).
+
+    Returns:
+        Global usage statistics
+    """
+    return get_global_stats()
 
 
 @app.post("/export/ics")

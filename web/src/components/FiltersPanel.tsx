@@ -4,8 +4,7 @@ import { useAppStore } from '@/lib/store';
 import { Status } from '@/types';
 
 export function FiltersPanel() {
-  const { filters, updateFilters, minCredits, maxCredits, setMinCredits, setMaxCredits } =
-    useAppStore();
+  const { filters, updateFilters } = useAppStore();
 
   const toggleStatus = (status: Status) => {
     const currentStatuses = filters.status || ['Open'];
@@ -21,7 +20,7 @@ export function FiltersPanel() {
 
   return (
     <div className="space-y-4">
-      {/* Status filters */}
+      {/* Section status filters */}
       <div>
         <label className="block text-sm font-medium mb-2 dark:text-gray-200">Section Status</label>
         <div className="flex flex-wrap gap-2">
@@ -41,38 +40,6 @@ export function FiltersPanel() {
               </button>
             );
           })}
-        </div>
-      </div>
-
-      {/* Credits */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium mb-1 dark:text-gray-200">Min Credits</label>
-          <input
-            type="number"
-            min="0"
-            max="24"
-            value={minCredits || ''}
-            onChange={(e) =>
-              setMinCredits(e.target.value ? Number(e.target.value) : undefined)
-            }
-            placeholder="None"
-            className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1 dark:text-gray-200">Max Credits</label>
-          <input
-            type="number"
-            min="0"
-            max="24"
-            value={maxCredits || ''}
-            onChange={(e) =>
-              setMaxCredits(e.target.value ? Number(e.target.value) : undefined)
-            }
-            placeholder="None"
-            className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
-          />
         </div>
       </div>
 

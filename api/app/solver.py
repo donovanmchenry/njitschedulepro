@@ -43,6 +43,18 @@ class ScheduleSolver:
         for offering in catalog:
             self.offerings_by_course[offering.course_key].append(offering)
 
+        # Extract required CRN offerings
+        self.required_crn_offerings: List[Offering] = []
+        if request.required_crns:
+            crn_map = {o.crn: o for o in catalog}
+            for crn in request.required_crns:
+                if crn in crn_map:
+                    self.required_crn_offerings.append(crn_map[crn])
+                    # Remove course_key from required_course_keys if CRN is specified
+                    # This prevents double-selection of the same course
+                    offering = crn_map[crn]
+                    # We'll handle this in the solve method
+
         # Pre-filter offerings
         self._prefilter_offerings()
 
@@ -135,9 +147,27 @@ class ScheduleSolver:
         Returns:
             List of Schedule objects, sorted by score (lower is better)
         """
+        # Validate required CRNs don't conflict with each other or unavailable times
+        for i, offering1 in enumerate(self.required_crn_offerings):
+            # Check for conflicts with other required CRNs
+            for offering2 in self.required_crn_offerings[i + 1:]:
+                if offering1.overlaps_with(offering2):
+                    return []  # Required CRNs conflict with each other
+
+            # Check for availability conflicts
+            if self._conflicts_with_availability(offering1):
+                return []  # Required CRN conflicts with unavailable times
+
+        # Remove courses from required_course_keys if their CRN is specified
+        required_crn_course_keys = {o.course_key for o in self.required_crn_offerings}
+        required_courses = [
+            ck for ck in self.request.required_course_keys
+            if ck not in required_crn_course_keys
+        ]
+
         # Order courses by fewest valid sections (fail-fast heuristic)
         required_courses = sorted(
-            self.request.required_course_keys,
+            required_courses,
             key=lambda ck: len(self.offerings_by_course.get(ck, [])),
         )
 
@@ -147,8 +177,8 @@ class ScheduleSolver:
                 # No valid offerings for this course
                 return []
 
-        # Start backtracking
-        self._backtrack(required_courses, 0, [])
+        # Start backtracking with required CRNs already in schedule
+        self._backtrack(required_courses, 0, self.required_crn_offerings.copy())
 
         # Sort by score (lower is better)
         self.results.sort(key=lambda s: s.score)
@@ -248,7 +278,7 @@ class ScheduleSolver:
 
         Scoring hierarchy:
         1. Minimize gaps between classes (primary)
-        2. Prefer instructors
+        2. Prefer instructors (global and per-course)
         3. Maximize open seats
         4. Deterministic tie-break by CRN
 
@@ -260,14 +290,27 @@ class ScheduleSolver:
         score = total_gap_minutes * 1000.0
 
         # Secondary: instructor preference (weight 100)
-        prefer_instructors = self.request.filters.prefer_instructors or []
         instructor_bonus = 0
+
+        # Global instructor preferences
+        prefer_instructors = self.request.filters.prefer_instructors or []
         for offering in schedule:
             if offering.instructor and prefer_instructors:
                 if any(
                     pref.lower() in offering.instructor.lower() for pref in prefer_instructors
                 ):
                     instructor_bonus += 1
+
+        # Per-course professor preferences (higher weight: 150)
+        preferred_professors = self.request.preferred_professors or {}
+        for offering in schedule:
+            if offering.course_key in preferred_professors and offering.instructor:
+                preferred_profs = preferred_professors[offering.course_key]
+                if any(
+                    pref.lower() in offering.instructor.lower() for pref in preferred_profs
+                ):
+                    instructor_bonus += 1.5  # Higher weight for course-specific preferences
+
         score -= instructor_bonus * 100.0
 
         # Tertiary: open seats (weight 1)

@@ -7,6 +7,7 @@ import { FiltersPanel } from './FiltersPanel';
 import { ScheduleView } from './ScheduleView';
 import { ScheduleList } from './ScheduleList';
 import { BookmarkedSchedules } from './BookmarkedSchedules';
+import { AIScheduleInput } from './AIScheduleInput';
 import { SolveRequest, Schedule } from '@/types';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
@@ -17,15 +18,17 @@ type Tab = 'generated' | 'bookmarks';
 export function ScheduleBuilder() {
   const {
     selectedCourseKeys,
+    requiredCRNs,
+    preferredProfessors,
     unavailableBlocks,
     filters,
-    minCredits,
-    maxCredits,
     schedules,
     setSchedules,
     isLoading,
     setIsLoading,
     bookmarkedSchedules,
+    addCourse,
+    addUnavailableBlock,
   } = useAppStore();
 
   const [error, setError] = useState<string | null>(null);
@@ -34,10 +37,45 @@ export function ScheduleBuilder() {
     schedule: Schedule;
     index: number;
   } | null>(null);
+  const [aiSuccess, setAiSuccess] = useState<string | null>(null);
+
+  const handleAIParsed = (constraints: any) => {
+    // Add courses
+    if (constraints.courses && Array.isArray(constraints.courses)) {
+      constraints.courses.forEach((courseKey: string) => {
+        if (!selectedCourseKeys.includes(courseKey)) {
+          addCourse(courseKey);
+        }
+      });
+    }
+
+    // Add unavailable blocks
+    if (constraints.unavailable_blocks && Array.isArray(constraints.unavailable_blocks)) {
+      constraints.unavailable_blocks.forEach((block: any) => {
+        addUnavailableBlock({
+          day: block.day,
+          start_min: block.start_min,
+          end_min: block.end_min,
+        });
+      });
+    }
+
+    // Show success message
+    const summary = [];
+    if (constraints.courses?.length) {
+      summary.push(`${constraints.courses.length} course(s)`);
+    }
+    if (constraints.unavailable_blocks?.length) {
+      summary.push(`${constraints.unavailable_blocks.length} time block(s)`);
+    }
+
+    setAiSuccess(`Added: ${summary.join(', ')}`);
+    setTimeout(() => setAiSuccess(null), 5000);
+  };
 
   const handleGenerateSchedules = async () => {
-    if (selectedCourseKeys.length === 0) {
-      setError('Please select at least one course');
+    if (selectedCourseKeys.length === 0 && requiredCRNs.length === 0) {
+      setError('Please select at least one course or CRN');
       return;
     }
 
@@ -46,10 +84,10 @@ export function ScheduleBuilder() {
 
     const request: SolveRequest = {
       required_course_keys: selectedCourseKeys,
+      required_crns: requiredCRNs,
+      preferred_professors: preferredProfessors,
       unavailable: unavailableBlocks,
       filters,
-      min_credits: minCredits,
-      max_credits: maxCredits,
       max_results: 500,
     };
 
@@ -90,6 +128,30 @@ export function ScheduleBuilder() {
           </h2>
 
           <div className="space-y-6">
+            {/* AI Input */}
+            <section>
+              <AIScheduleInput onConstraintsParsed={handleAIParsed} />
+            </section>
+
+            {/* Success Message */}
+            {aiSuccess && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded">
+                {aiSuccess}
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                  Or manually configure
+                </span>
+              </div>
+            </div>
+
             {/* Course Selection */}
             <section>
               <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">

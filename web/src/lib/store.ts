@@ -22,6 +22,16 @@ interface AppState {
   addCourse: (courseKey: string) => void;
   removeCourse: (courseKey: string) => void;
 
+  // Required CRNs (specific sections that must be included)
+  requiredCRNs: string[];
+  addRequiredCRN: (crn: string) => void;
+  removeRequiredCRN: (crn: string) => void;
+
+  // Preferred professors per course
+  preferredProfessors: Record<string, string[]>;
+  addPreferredProfessor: (courseKey: string, professor: string) => void;
+  removePreferredProfessor: (courseKey: string, professor: string) => void;
+
   // Availability blocks
   unavailableBlocks: AvailabilityBlock[];
   addUnavailableBlock: (block: AvailabilityBlock) => void;
@@ -31,12 +41,6 @@ interface AppState {
   // Filters
   filters: ScheduleFilters;
   updateFilters: (filters: Partial<ScheduleFilters>) => void;
-
-  // Credits
-  minCredits?: number;
-  maxCredits?: number;
-  setMinCredits: (value?: number) => void;
-  setMaxCredits: (value?: number) => void;
 
   // Generated schedules
   schedules: Schedule[];
@@ -72,6 +76,40 @@ export const useAppStore = create<AppState>()(
       removeCourse: (courseKey) =>
         set((state) => ({
           selectedCourseKeys: state.selectedCourseKeys.filter((k) => k !== courseKey),
+          // Also remove any preferred professors for this course
+          preferredProfessors: Object.fromEntries(
+            Object.entries(state.preferredProfessors).filter(([k]) => k !== courseKey)
+          ),
+        })),
+
+      // Required CRNs
+      requiredCRNs: [],
+      addRequiredCRN: (crn) =>
+        set((state) => ({
+          requiredCRNs: [...state.requiredCRNs, crn],
+        })),
+      removeRequiredCRN: (crn) =>
+        set((state) => ({
+          requiredCRNs: state.requiredCRNs.filter((c) => c !== crn),
+        })),
+
+      // Preferred professors
+      preferredProfessors: {},
+      addPreferredProfessor: (courseKey, professor) =>
+        set((state) => ({
+          preferredProfessors: {
+            ...state.preferredProfessors,
+            [courseKey]: [...(state.preferredProfessors[courseKey] || []), professor],
+          },
+        })),
+      removePreferredProfessor: (courseKey, professor) =>
+        set((state) => ({
+          preferredProfessors: {
+            ...state.preferredProfessors,
+            [courseKey]: (state.preferredProfessors[courseKey] || []).filter(
+              (p) => p !== professor
+            ),
+          },
         })),
 
       // Availability blocks
@@ -94,12 +132,6 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           filters: { ...state.filters, ...filters },
         })),
-
-      // Credits
-      minCredits: undefined,
-      maxCredits: undefined,
-      setMinCredits: (value) => set({ minCredits: value }),
-      setMaxCredits: (value) => set({ maxCredits: value }),
 
       // Generated schedules
       schedules: [],

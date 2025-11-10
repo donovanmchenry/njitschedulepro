@@ -135,6 +135,14 @@ class SolveRequest(BaseModel):
 
     required_course_keys: List[str] = Field(..., min_length=1)
     optional_course_keys: Optional[List[str]] = None
+    required_crns: List[str] = Field(
+        default_factory=list,
+        description="Specific CRNs that must be included in the schedule"
+    )
+    preferred_professors: dict[str, List[str]] = Field(
+        default_factory=dict,
+        description="Map of course_key to list of preferred professor names"
+    )
     min_credits: Optional[float] = None
     max_credits: Optional[float] = None
     unavailable: List[AvailabilityBlock] = Field(default_factory=list)
