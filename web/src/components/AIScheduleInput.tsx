@@ -155,7 +155,7 @@ export function AIScheduleInput({ onConstraintsParsed }: AIScheduleInputProps) {
         <Info size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
         <div className="text-xs text-blue-700 dark:text-blue-300">
           <p className="font-medium mb-1">Describe your ideal schedule:</p>
-          <p>Example: "I need CS 100 and CS 114, no Friday classes, prefer morning sessions"</p>
+          <p>Example: &quot;I need CS 100 and CS 114, no Friday classes, prefer morning sessions&quot;</p>
         </div>
       </div>
 
