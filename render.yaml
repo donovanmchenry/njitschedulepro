@@ -1,0 +1,31 @@
+services:
+  # Backend API
+  - type: web
+    name: njit-schedule-pro-api
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "cd api && pip install poetry && poetry install"
+    startCommand: "cd api && poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PYTHONUNBUFFERED
+        value: 1
+    autoDeploy: true
+    healthCheckPath: /
+
+  # Frontend (optional - if hosting on Render instead of Vercel)
+  # - type: web
+  #   name: njit-schedule-pro-web
+  #   env: node
+  #   region: oregon
+  #   plan: free
+  #   buildCommand: "cd web && npm install -g pnpm && pnpm install && pnpm build"
+  #   startCommand: "cd web && pnpm start"
+  #   envVars:
+  #     - key: NODE_VERSION
+  #       value: 18
+  #     - key: NEXT_PUBLIC_API_URL
+  #       sync: false  # Set this in Render dashboard to your API URL
+  #   autoDeploy: true

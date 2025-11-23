@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install poetry
 
 # Copy dependency files
-COPY pyproject.toml ./
+COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies
 RUN poetry config virtualenvs.create false \
@@ -14,6 +14,10 @@ RUN poetry config virtualenvs.create false \
 
 # Copy application code
 COPY app ./app
+
+# Note: courseschedules directory should be mounted as a volume in docker-compose
+# For production (Render/Railway), courseschedules should be in the repo root
+# and will be copied during the build process
 
 # Expose port
 EXPOSE 8000
