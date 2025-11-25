@@ -187,7 +187,11 @@ class ScheduleUpdater:
                 logger.warning(f"API returned status code: {response.status_code}")
                 return False
 
-        except requests.exceptions.RequestException as e:
+        except ImportError:
+            logger.info("requests library not available, skipping API check")
+            logger.info("API will load new catalog on next startup")
+            return False
+        except Exception as e:
             logger.warning(f"Could not connect to API at {api_url}: {e}")
             logger.info("API will load new catalog on next startup")
             return False
