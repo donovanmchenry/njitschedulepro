@@ -5,6 +5,16 @@ import { useAppStore } from '@/lib/store';
 import { AvailabilityBlock, DAYS, DAY_NAMES, DayOfWeek, minutesToTime } from '@/types';
 import { X } from 'lucide-react';
 
+function selectsToMinutes(hour: string, minute: string, period: 'AM' | 'PM'): number {
+  let h = parseInt(hour);
+  if (period === 'AM' && h === 12) h = 0;
+  if (period === 'PM' && h !== 12) h += 12;
+  return h * 60 + parseInt(minute);
+}
+
+const SELECT_CLASS =
+  'px-2 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg text-sm';
+
 export function AvailabilityEditor() {
   const {
     unavailableBlocks,
@@ -13,27 +23,23 @@ export function AvailabilityEditor() {
   } = useAppStore();
 
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>('Mon');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
+  const [startHour, setStartHour] = useState('9');
+  const [startMinute, setStartMinute] = useState('00');
+  const [startPeriod, setStartPeriod] = useState<'AM' | 'PM'>('AM');
+  const [endHour, setEndHour] = useState('5');
+  const [endMinute, setEndMinute] = useState('00');
+  const [endPeriod, setEndPeriod] = useState<'AM' | 'PM'>('PM');
 
   const handleAddBlock = () => {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
-
-    const start_min = startHour * 60 + startMin;
-    const end_min = endHour * 60 + endMin;
+    const start_min = selectsToMinutes(startHour, startMinute, startPeriod);
+    const end_min = selectsToMinutes(endHour, endMinute, endPeriod);
 
     if (end_min <= start_min) {
       alert('End time must be after start time');
       return;
     }
 
-    const block: AvailabilityBlock = {
-      day: selectedDay,
-      start_min,
-      end_min,
-    };
-
+    const block: AvailabilityBlock = { day: selectedDay, start_min, end_min };
     addUnavailableBlock(block);
   };
 
@@ -59,21 +65,41 @@ export function AvailabilityEditor() {
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label className="block text-sm font-medium mb-1 dark:text-gray-200">From</label>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
-            />
+            <div className="flex gap-1">
+              <select value={startHour} onChange={(e) => setStartHour(e.target.value)} className={SELECT_CLASS}>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+              <select value={startMinute} onChange={(e) => setStartMinute(e.target.value)} className={SELECT_CLASS}>
+                {['00','15','30','45'].map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <select value={startPeriod} onChange={(e) => setStartPeriod(e.target.value as 'AM' | 'PM')} className={SELECT_CLASS}>
+                <option>AM</option>
+                <option>PM</option>
+              </select>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1 dark:text-gray-200">To</label>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="w-full px-3 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg"
-            />
+            <div className="flex gap-1">
+              <select value={endHour} onChange={(e) => setEndHour(e.target.value)} className={SELECT_CLASS}>
+                {[1,2,3,4,5,6,7,8,9,10,11,12].map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+              <select value={endMinute} onChange={(e) => setEndMinute(e.target.value)} className={SELECT_CLASS}>
+                {['00','15','30','45'].map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <select value={endPeriod} onChange={(e) => setEndPeriod(e.target.value as 'AM' | 'PM')} className={SELECT_CLASS}>
+                <option>AM</option>
+                <option>PM</option>
+              </select>
+            </div>
           </div>
         </div>
 

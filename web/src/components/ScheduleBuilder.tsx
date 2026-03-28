@@ -32,6 +32,7 @@ export function ScheduleBuilder() {
   } = useAppStore();
 
   const [error, setError] = useState<string | null>(null);
+  const [noResultsHints, setNoResultsHints] = useState<string[] | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('generated');
   const [selectedBookmark, setSelectedBookmark] = useState<{
     schedule: Schedule;
@@ -81,6 +82,7 @@ export function ScheduleBuilder() {
 
     setIsLoading(true);
     setError(null);
+    setNoResultsHints(null);
 
     const request: SolveRequest = {
       required_course_keys: selectedCourseKeys,
@@ -107,9 +109,15 @@ export function ScheduleBuilder() {
       setSchedules(data.schedules || []);
 
       if (data.schedules.length === 0) {
-        setError(
-          'No valid schedules found. Try adjusting your constraints or availability blocks.'
-        );
+        const hints: string[] = [];
+        if (filters.status?.length === 1 && filters.status[0] === 'Open')
+          hints.push('Only "Open" sections are included — try enabling Waitlist in Filters.');
+        if (requiredCRNs.length > 0)
+          hints.push(`You have ${requiredCRNs.length} pinned section(s) — remove CRN pins to allow more flexibility.`);
+        if (unavailableBlocks.length > 3)
+          hints.push('You have many availability restrictions — try removing some to open more time slots.');
+        hints.push('Try broadening your constraints and generating again.');
+        setNoResultsHints(hints);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -188,6 +196,17 @@ export function ScheduleBuilder() {
             {error && (
               <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
                 {error}
+              </div>
+            )}
+
+            {noResultsHints && schedules.length === 0 && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
+                <p className="font-semibold text-amber-800 dark:text-amber-300 mb-2">No schedules found</p>
+                <ul className="space-y-1 text-sm text-amber-700 dark:text-amber-400">
+                  {noResultsHints.map((hint, i) => (
+                    <li key={i}>• {hint}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

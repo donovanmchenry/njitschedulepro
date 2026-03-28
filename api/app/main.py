@@ -2,6 +2,7 @@
 
 import glob
 import os
+import time as _time
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
@@ -19,6 +21,7 @@ from app.ics_export import generate_ics
 from app.models import Offering, Schedule, SolveRequest, SolveResponse
 from app.normalizer import normalize_csv, normalize_multiple_csvs
 from app.rate_limiter import check_rate_limit, get_global_stats, get_usage_stats, increment_usage
+from app.rmp import batch_fetch_ratings
 from app.solver import solve_schedules
 
 app = FastAPI(
@@ -55,6 +58,29 @@ app.add_middleware(
 # In-memory catalog storage (can be replaced with database)
 catalog: List[Offering] = []
 catalog_metadata: Dict = {}
+
+# Solve endpoint rate limiting (separate from AI rate limiter)
+# Note: request.client.host is the proxy IP when behind a reverse proxy (e.g. Render).
+_solve_rate_limit: Dict[str, List[float]] = {}
+SOLVE_RATE_LIMIT = 30  # requests per minute per IP
+SOLVE_RATE_WINDOW = 60  # seconds
+
+
+def _check_solve_rate_limit(ip: str) -> bool:
+    """Returns True if the request should be allowed."""
+    now = _time.time()
+    window_start = now - SOLVE_RATE_WINDOW
+    timestamps = [t for t in _solve_rate_limit.get(ip, []) if t > window_start]
+    if len(timestamps) >= SOLVE_RATE_LIMIT:
+        _solve_rate_limit[ip] = timestamps
+        return False
+    timestamps.append(now)
+    _solve_rate_limit[ip] = timestamps
+    return True
+
+
+class RatingsRequest(BaseModel):
+    names: List[str]
 
 
 def _get_courseschedules_dir() -> str:
@@ -291,29 +317,37 @@ async def get_courses(search: Optional[str] = None):
 
 
 @app.post("/solve", response_model=SolveResponse)
-async def solve(request: SolveRequest):
+async def solve(request_body: SolveRequest, request: Request):
     """
     Generate schedules based on constraints.
 
     Args:
-        request: Solve request with constraints
+        request_body: Solve request with constraints
+        request: FastAPI request object (for rate limiting)
 
     Returns:
         List of valid schedules
     """
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_solve_rate_limit(client_ip):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many schedule requests. Limit is 30 per minute. Please wait and try again.",
+        )
+
     if not catalog:
         raise HTTPException(status_code=400, detail="Catalog is empty. Please ingest CSV files first.")
 
     # Validate required courses exist
     catalog_course_keys = {o.course_key for o in catalog}
-    missing = [ck for ck in request.required_course_keys if ck not in catalog_course_keys]
+    missing = [ck for ck in request_body.required_course_keys if ck not in catalog_course_keys]
     if missing:
         raise HTTPException(
             status_code=400, detail=f"Required courses not found in catalog: {', '.join(missing)}"
         )
 
     # Solve
-    schedules = solve_schedules(catalog, request)
+    schedules = solve_schedules(catalog, request_body)
 
     # Count unique courses in catalog
     unique_courses = len(set(o.course_key for o in catalog))
@@ -434,6 +468,15 @@ async def export_ics(
     )
 
 
+def _minutes_to_ampm(total_minutes: int) -> str:
+    """Convert minutes-from-midnight to 12-hour AM/PM string (e.g. 780 → '1:00 PM')."""
+    h = total_minutes // 60
+    m = total_minutes % 60
+    period = "PM" if h >= 12 else "AM"
+    display_h = h % 12 or 12
+    return f"{display_h}:{m:02d} {period}"
+
+
 @app.post("/export/csv")
 async def export_csv(schedule: Schedule):
     """
@@ -474,11 +517,7 @@ async def export_csv(schedule: Schedule):
         if offering.meetings:
             days_str = "".join(sorted(set(m.day.value[0] for m in offering.meetings)))
             first_meeting = offering.meetings[0]
-            start_hr = first_meeting.start_min // 60
-            start_min = first_meeting.start_min % 60
-            end_hr = first_meeting.end_min // 60
-            end_min = first_meeting.end_min % 60
-            times_str = f"{start_hr:02d}:{start_min:02d} - {end_hr:02d}:{end_min:02d}"
+            times_str = f"{_minutes_to_ampm(first_meeting.start_min)} - {_minutes_to_ampm(first_meeting.end_min)}"
             location = first_meeting.location or ""
         else:
             days_str = "TBA"
@@ -509,3 +548,20 @@ async def export_csv(schedule: Schedule):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=njit_schedule.csv"},
     )
+
+
+@app.post("/professors/ratings")
+async def get_professor_ratings(req: RatingsRequest):
+    """
+    Fetch RateMyProfessor ratings for a list of instructor names.
+    Never raises — returns empty dict if RMP is unreachable.
+    """
+    if not req.names:
+        return {}
+    valid = [n for n in req.names if n and n.strip() and n != "Staff TBA"]
+    if not valid:
+        return {}
+    try:
+        return await batch_fetch_ratings(valid)
+    except Exception:
+        return {}

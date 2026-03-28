@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
+import { apiUrl } from '@/lib/api';
 import { X } from 'lucide-react';
+
+interface RmpRating {
+  avg_rating: number;
+  num_ratings: number;
+  would_take_again: number;
+}
 
 export function CourseSelector() {
   const {
@@ -17,6 +24,25 @@ export function CourseSelector() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showingSectionsFor, setShowingSectionsFor] = useState<string | null>(null);
+  const [rmpRatings, setRmpRatings] = useState<Record<string, RmpRating | null>>({});
+
+  // Fetch RMP ratings when a course's sections are expanded
+  useEffect(() => {
+    if (!showingSectionsFor) return;
+    const course = courses.find((c) => c.course_key === showingSectionsFor);
+    if (!course) return;
+    const names = [...new Set(course.sections.map((s) => s.instructor).filter(Boolean))] as string[];
+    if (!names.length) return;
+
+    fetch(apiUrl('/professors/ratings'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ names }),
+    })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => setRmpRatings((prev) => ({ ...prev, ...data })))
+      .catch(() => {});
+  }, [showingSectionsFor]);
 
   // Check if search term looks like a CRN (5 digits)
   const looksLikeCRN = /^\d{4,6}$/.test(searchTerm.trim());
@@ -185,8 +211,16 @@ export function CourseSelector() {
                                 CRN: {section.crn}
                               </span>
                             </div>
-                            <div className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">
+                            <div className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 flex items-center gap-1.5 flex-wrap">
                               {section.instructor || 'Staff TBA'}
+                              {section.instructor && rmpRatings[section.instructor] && (
+                                <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                                  ★ {rmpRatings[section.instructor]!.avg_rating.toFixed(1)}
+                                  <span className="text-gray-400 dark:text-gray-500 ml-0.5">
+                                    ({rmpRatings[section.instructor]!.num_ratings})
+                                  </span>
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                               {section.delivery} • {section.credits || '?'} credits

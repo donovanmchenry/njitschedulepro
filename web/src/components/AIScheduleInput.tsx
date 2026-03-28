@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Settings, AlertCircle, Loader2, Info } from 'lucide-react';
 import { apiUrl } from '@/lib/api';
 
@@ -20,6 +20,15 @@ export function AIScheduleInput({ onConstraintsParsed }: AIScheduleInputProps) {
     return '';
   });
   const [usage, setUsage] = useState<any>(null);
+
+  // Pre-fetch usage stats on mount so the limit is visible before the first request
+  useEffect(() => {
+    if (apiKey) return; // irrelevant when using own key
+    fetch(apiUrl('/ai/usage'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setUsage(data); })
+      .catch(() => {});
+  }, []);
 
   const saveApiKey = () => {
     if (apiKey.trim()) {
