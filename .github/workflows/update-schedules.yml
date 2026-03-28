@@ -62,6 +62,17 @@ jobs:
           git commit -m "Auto-update course schedules - $(date '+%Y-%m-%d %H:%M')"
           git push
 
+      - name: Trigger API reload
+        if: steps.check_changes.outputs.has_changes == 'true' && secrets.API_URL != ''
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          RELOAD_SECRET: ${{ secrets.RELOAD_SECRET }}
+        run: |
+          curl -sf -X POST "${API_URL}/reload" \
+            -H "X-Reload-Secret: ${RELOAD_SECRET}" \
+            && echo "API catalog reloaded successfully" \
+            || echo "Warning: API reload request failed (server may need manual restart)"
+
       - name: No changes detected
         if: steps.check_changes.outputs.has_changes == 'false'
         run: echo "No changes to course schedules detected"

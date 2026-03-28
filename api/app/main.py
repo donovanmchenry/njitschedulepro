@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
@@ -57,28 +57,44 @@ catalog: List[Offering] = []
 catalog_metadata: Dict = {}
 
 
+def _get_courseschedules_dir() -> str:
+    """Resolve the courseschedules directory, checking the mounted volume path first."""
+    # Docker volume mounts courseschedules to /app/courseschedules
+    volume_path = "/app/courseschedules"
+    if os.path.exists(volume_path):
+        return volume_path
+    # Fallback: parent of cwd (when running from api/ locally)
+    parent_dir = os.path.dirname(os.getcwd())
+    parent_path = os.path.join(parent_dir, "courseschedules")
+    if os.path.exists(parent_path):
+        return parent_path
+    return os.path.join(os.getcwd(), "courseschedules")
+
+
+def _load_catalog_from_disk() -> tuple[List[Offering], Dict]:
+    """Read all CSVs from the courseschedules directory and return offerings + metadata."""
+    courseschedules_dir = _get_courseschedules_dir()
+    if not os.path.exists(courseschedules_dir):
+        return [], {}
+    csv_files = glob.glob(os.path.join(courseschedules_dir, "*.csv"))
+    if not csv_files:
+        return [], {}
+    print(f"Loading {len(csv_files)} CSV files from {courseschedules_dir}...")
+    offerings = normalize_multiple_csvs(csv_files)
+    metadata = {
+        "loaded_at": datetime.now().isoformat(),
+        "file_count": len(csv_files),
+        "offering_count": len(offerings),
+    }
+    print(f"Loaded {len(offerings)} offerings from {len(csv_files)} files")
+    return offerings, metadata
+
+
 @app.on_event("startup")
 async def startup_event():
     """Load existing CSVs from courseschedules directory on startup."""
     global catalog, catalog_metadata
-
-    # Look for courseschedules in parent directory (when running from api/)
-    parent_dir = os.path.dirname(os.getcwd())
-    courseschedules_dir = os.path.join(parent_dir, "courseschedules")
-    # Fallback to current directory if not found
-    if not os.path.exists(courseschedules_dir):
-        courseschedules_dir = os.path.join(os.getcwd(), "courseschedules")
-    if os.path.exists(courseschedules_dir):
-        csv_files = glob.glob(os.path.join(courseschedules_dir, "*.csv"))
-        if csv_files:
-            print(f"Loading {len(csv_files)} CSV files from {courseschedules_dir}...")
-            catalog = normalize_multiple_csvs(csv_files)
-            catalog_metadata = {
-                "loaded_at": datetime.now().isoformat(),
-                "file_count": len(csv_files),
-                "offering_count": len(catalog),
-            }
-            print(f"Loaded {len(catalog)} offerings from {len(csv_files)} files")
+    catalog, catalog_metadata = _load_catalog_from_disk()
 
 
 @app.get("/")
@@ -90,6 +106,26 @@ async def root():
         "version": "1.0.0",
         "catalog_loaded": len(catalog) > 0,
         "catalog_size": len(catalog),
+    }
+
+
+@app.post("/reload")
+async def reload_catalog(x_reload_secret: Optional[str] = Header(default=None)):
+    """
+    Reload the course catalog from disk without restarting the server.
+    If the RELOAD_SECRET env var is set, the X-Reload-Secret header must match it.
+    """
+    global catalog, catalog_metadata
+
+    reload_secret = os.getenv("RELOAD_SECRET")
+    if reload_secret and x_reload_secret != reload_secret:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-Reload-Secret header")
+
+    catalog, catalog_metadata = _load_catalog_from_disk()
+    return {
+        "status": "reloaded",
+        "offering_count": len(catalog),
+        "loaded_at": catalog_metadata.get("loaded_at"),
     }
 
 
@@ -369,8 +405,8 @@ async def get_ai_global_stats():
 @app.post("/export/ics")
 async def export_ics(
     schedule: Schedule,
-    term_start: str = "2026-01-21",  # Default Spring 2026 start
-    term_end: str = "2026-05-08",  # Default Spring 2026 end
+    term_start: str = "2026-09-01",  # Default Fall 2026 start
+    term_end: str = "2026-12-13",  # Default Fall 2026 end (last day of classes)
 ):
     """
     Export a schedule as an ICS calendar file.

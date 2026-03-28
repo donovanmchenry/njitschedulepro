@@ -167,7 +167,7 @@ def main():
             print(f"  {room}: {status}")
 
         print(f"\nComplete schedule saved to: {output_file}")
-        print(f"Total courses in Spring 2026: {len(df)}")
+        print(f"Total courses in Fall 2026: {len(df)}")
         print()
 
 if __name__ == "__main__":
