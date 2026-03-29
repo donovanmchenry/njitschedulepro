@@ -21,6 +21,8 @@ query TeacherSearch($query: TeacherSearchQuery!) {
     teachers(query: $query, first: 3) {
       edges {
         node {
+          id
+          legacyId
           firstName
           lastName
           avgRating
@@ -83,6 +85,7 @@ async def fetch_professor_rating(name: str) -> Optional[dict]:
             "avg_rating": node["avgRating"],
             "num_ratings": node["numRatings"],
             "would_take_again": node["wouldTakeAgainPercent"],
+            "url": f"https://www.ratemyprofessors.com/professor/{node['legacyId']}",
         }
         _cache[name] = result
         return result

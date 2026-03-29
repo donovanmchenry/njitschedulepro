@@ -1,9 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { DAYS, DAY_NAMES, minutesToTime } from '@/types';
-import { Download, BookmarkPlus } from 'lucide-react';
+import { Download, Bookmark, BookmarkPlus } from 'lucide-react';
 import { apiUrl } from '@/lib/api';
+
+interface RmpRating {
+  avg_rating: number;
+  num_ratings: number;
+  url: string;
+}
 
 const COLORS = [
   'bg-blue-200 border-blue-400 text-blue-900',
@@ -21,10 +28,34 @@ interface ScheduleViewProps {
 }
 
 export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {}) {
-  const { schedules, selectedScheduleIndex, addBookmark } = useAppStore();
+  const { schedules, selectedScheduleIndex, addBookmark, removeBookmark, bookmarkedSchedules } = useAppStore();
   const schedule = propSchedule || schedules[selectedScheduleIndex];
 
+  const [rmpRatings, setRmpRatings] = useState<Record<string, RmpRating | null>>({});
+
+  useEffect(() => {
+    if (!schedule) return;
+    const names = [...new Set(
+      schedule.offerings.map((o) => o.instructor).filter((n): n is string => !!n && n !== 'nan')
+    )];
+    if (!names.length) return;
+    fetch(apiUrl('/professors/ratings'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ names }),
+    })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then(setRmpRatings)
+      .catch(() => {});
+  }, [schedule]);
+
   if (!schedule) return null;
+
+  const crns = schedule.offerings.map((o) => o.crn).sort().join(',');
+  const bookmarkIndex = bookmarkedSchedules.findIndex(
+    (b) => b.offerings.map((o) => o.crn).sort().join(',') === crns
+  );
+  const isBookmarked = bookmarkIndex !== -1;
 
   // Create color map for courses
   const courseColorMap = new Map<string, string>();
@@ -117,11 +148,15 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
         <div className="flex gap-2">
           {!isBookmarkedView && (
             <button
-              onClick={() => addBookmark(schedule)}
-              className="flex items-center gap-2 px-3 py-2 bg-njit-navy/10 hover:bg-njit-navy/20 text-njit-navy dark:bg-njit-gray/20 dark:text-njit-gray rounded-lg text-sm transition-colors"
+              onClick={() => isBookmarked ? removeBookmark(bookmarkIndex) : addBookmark(schedule)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                isBookmarked
+                  ? 'bg-njit-navy hover:bg-njit-navy/80 text-white dark:bg-blue-600 dark:hover:bg-blue-700'
+                  : 'bg-njit-navy/10 hover:bg-njit-navy/20 text-njit-navy dark:bg-njit-gray/20 dark:text-njit-gray'
+              }`}
             >
-              <BookmarkPlus size={16} />
-              Bookmark
+              {isBookmarked ? <Bookmark size={16} fill="currentColor" /> : <BookmarkPlus size={16} />}
+              {isBookmarked ? 'Saved' : 'Bookmark'}
             </button>
           )}
           <button
@@ -201,8 +236,19 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
                                 <div className="font-bold">{offering.course_key}</div>
                                 <div className="text-xs truncate">{offering.section}</div>
                                 {offering.instructor && offering.instructor !== 'nan' && (
-                                  <div className="text-xs truncate font-medium">
-                                    {offering.instructor}
+                                  <div className="text-xs font-medium flex items-center gap-1 flex-wrap">
+                                    <span className="truncate">{offering.instructor}</span>
+                                    {rmpRatings[offering.instructor] && (
+                                      <a
+                                        href={rmpRatings[offering.instructor]!.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="font-semibold hover:underline shrink-0 opacity-80"
+                                      >
+                                        ★ {rmpRatings[offering.instructor]!.avg_rating.toFixed(1)}
+                                      </a>
+                                    )}
                                   </div>
                                 )}
                                 <div className="text-xs">

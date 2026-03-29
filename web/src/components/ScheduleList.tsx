@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { Schedule } from '@/types';
 
-type SortMode = 'score' | 'earliest' | 'gaps' | 'credits';
+type SortMode = 'score' | 'earliest' | 'latest' | 'gaps' | 'days';
 
 function totalGapMinutes(schedule: Schedule): number {
   let gaps = 0;
@@ -27,6 +27,20 @@ function earliestStart(schedule: Schedule): number {
   return starts.length ? Math.min(...starts) : Infinity;
 }
 
+function latestStart(schedule: Schedule): number {
+  const starts = schedule.offerings.flatMap((o) => o.meetings.map((m) => m.start_min));
+  return starts.length ? Math.min(...starts) : 0;
+}
+
+function daysOnCampus(schedule: Schedule): number {
+  const days = new Set(
+    schedule.offerings
+      .flatMap((o) => o.meetings.map((m) => m.day))
+      .filter(Boolean)
+  );
+  return days.size;
+}
+
 export function ScheduleList() {
   const { schedules, selectedScheduleIndex, setSelectedScheduleIndex } = useAppStore();
   const [sortMode, setSortMode] = useState<SortMode>('score');
@@ -35,8 +49,9 @@ export function ScheduleList() {
 
   const sortedSchedules = [...schedules].sort((a, b) => {
     if (sortMode === 'earliest') return earliestStart(a) - earliestStart(b);
+    if (sortMode === 'latest') return latestStart(b) - latestStart(a);
     if (sortMode === 'gaps') return totalGapMinutes(a) - totalGapMinutes(b);
-    if (sortMode === 'credits') return b.total_credits - a.total_credits;
+    if (sortMode === 'days') return daysOnCampus(a) - daysOnCampus(b);
     return a.score - b.score; // 'score' default
   });
 
@@ -57,8 +72,9 @@ export function ScheduleList() {
         >
           <option value="score">Best Score</option>
           <option value="earliest">Earliest Start</option>
+          <option value="latest">Latest Start</option>
           <option value="gaps">Fewest Gaps</option>
-          <option value="credits">Most Credits</option>
+          <option value="days">Fewest Days on Campus</option>
         </select>
       </div>
 

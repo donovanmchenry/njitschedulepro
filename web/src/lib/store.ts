@@ -127,6 +127,7 @@ export const useAppStore = create<AppState>()(
       // Filters
       filters: {
         status: ['Open' as Status],
+        include_honors: false,
       },
       updateFilters: (filters) =>
         set((state) => ({
@@ -148,9 +149,14 @@ export const useAppStore = create<AppState>()(
       // Bookmarks
       bookmarkedSchedules: [],
       addBookmark: (schedule) =>
-        set((state) => ({
-          bookmarkedSchedules: [...state.bookmarkedSchedules, schedule],
-        })),
+        set((state) => {
+          const crns = schedule.offerings.map((o) => o.crn).sort().join(',');
+          const alreadySaved = state.bookmarkedSchedules.some(
+            (b) => b.offerings.map((o) => o.crn).sort().join(',') === crns
+          );
+          if (alreadySaved) return state;
+          return { bookmarkedSchedules: [...state.bookmarkedSchedules, schedule] };
+        }),
       removeBookmark: (index) =>
         set((state) => ({
           bookmarkedSchedules: state.bookmarkedSchedules.filter((_, i) => i !== index),
@@ -161,6 +167,9 @@ export const useAppStore = create<AppState>()(
       // Only persist bookmarks, not temporary state
       partialize: (state) => ({
         bookmarkedSchedules: state.bookmarkedSchedules,
+        // Cap at 50 to stay well within localStorage limits
+        schedules: state.schedules.slice(0, 50),
+        selectedScheduleIndex: state.selectedScheduleIndex,
       }),
     }
   )

@@ -136,29 +136,17 @@ export function ScheduleBuilder() {
           </h2>
 
           <div className="space-y-6">
-            {/* AI Input */}
-            <section>
+            {/* AI Input — hidden until secure implementation is ready */}
+            {/* <section>
               <AIScheduleInput onConstraintsParsed={handleAIParsed} />
-            </section>
+            </section> */}
 
-            {/* Success Message */}
-            {aiSuccess && (
+            {/* AI Success Message — hidden with AI input */}
+            {/* {aiSuccess && (
               <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded">
                 {aiSuccess}
               </div>
-            )}
-
-            {/* Divider */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                  Or manually configure
-                </span>
-              </div>
-            </div>
+            )} */}
 
             {/* Course Selection */}
             <section>

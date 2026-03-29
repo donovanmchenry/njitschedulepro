@@ -236,9 +236,13 @@ def normalize_csv_row(row: pd.Series) -> Optional[Offering]:
         credits_val = row.get("Credits")
         credits = float(credits_val) if pd.notna(credits_val) and str(credits_val).strip() else None
 
-        instructor = str(row.get("Instructor", "")).strip() or None
-        info = str(row.get("Info", "")).strip() or None
-        comments = str(row.get("Comments", "")).strip() or None
+        def _clean(val) -> str | None:
+            s = str(val).strip()
+            return None if not s or s.lower() == "nan" else s
+
+        instructor = _clean(row.get("Instructor", ""))
+        info = _clean(row.get("Info", ""))
+        comments = _clean(row.get("Comments", ""))
 
         return Offering(
             crn=crn,

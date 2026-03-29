@@ -9,6 +9,7 @@ interface RmpRating {
   avg_rating: number;
   num_ratings: number;
   would_take_again: number;
+  url: string;
 }
 
 export function CourseSelector() {
@@ -214,12 +215,18 @@ export function CourseSelector() {
                             <div className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 flex items-center gap-1.5 flex-wrap">
                               {section.instructor || 'Staff TBA'}
                               {section.instructor && rmpRatings[section.instructor] && (
-                                <span className="text-yellow-600 dark:text-yellow-400 font-medium">
+                                <a
+                                  href={rmpRatings[section.instructor]!.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-amber-500 dark:text-amber-400 font-medium hover:underline"
+                                >
                                   ★ {rmpRatings[section.instructor]!.avg_rating.toFixed(1)}
                                   <span className="text-gray-400 dark:text-gray-500 ml-0.5">
                                     ({rmpRatings[section.instructor]!.num_ratings})
                                   </span>
-                                </span>
+                                </a>
                               )}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">

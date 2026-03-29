@@ -74,7 +74,7 @@ export function FiltersPanel() {
             }
             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
               filters.include_honors ?? true
-                ? 'bg-njit-navy text-white'
+                ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
                 : 'bg-njit-gray/50 text-gray-700 hover:bg-njit-gray/70 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500'
             }`}
           >
