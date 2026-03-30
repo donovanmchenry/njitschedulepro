@@ -2,7 +2,9 @@
 
 import glob
 import os
+import re
 import time as _time
+import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
@@ -11,6 +13,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+import httpx
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,6 +61,12 @@ app.add_middleware(
 # In-memory catalog storage (can be replaced with database)
 catalog: List[Offering] = []
 catalog_metadata: Dict = {}
+
+# Shared schedules: id → serialized Schedule dict
+_shared_schedules: Dict[str, dict] = {}
+
+# Prerequisites cache: normalized course_key → prereq text or None
+_prereqs_cache: Dict[str, Optional[str]] = {}
 
 # Solve endpoint rate limiting (separate from AI rate limiter)
 # Note: request.client.host is the proxy IP when behind a reverse proxy (e.g. Render).
@@ -565,3 +574,67 @@ async def get_professor_ratings(req: RatingsRequest):
         return await batch_fetch_ratings(valid)
     except Exception:
         return {}
+
+
+@app.get("/catalog/prerequisites/{course_key:path}")
+async def get_prerequisites(course_key: str):
+    """
+    Fetch prerequisites for a course from the NJIT course catalog.
+    Scrapes catalog.njit.edu and caches results in memory.
+    """
+    cache_key = course_key.strip().upper()
+    if cache_key in _prereqs_cache:
+        return {"prerequisites": _prereqs_cache[cache_key]}
+
+    # Build catalog search URL, e.g. "CS 114" → "?P=CS+114"
+    search_term = cache_key.replace(" ", "+")
+
+    try:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
+            resp = await client.get(
+                f"https://catalog.njit.edu/search/?P={search_term}",
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            if resp.status_code == 200:
+                # Find the first "Prerequisite" sentence on the page
+                match = re.search(
+                    r"Prerequisite[s]?:\s*(.*?)(?:<br|</p|<div)",
+                    resp.text,
+                    re.IGNORECASE | re.DOTALL,
+                )
+                if match:
+                    raw = match.group(1)
+                    # Strip HTML tags and collapse whitespace
+                    clean = re.sub(r"<[^>]+>", " ", raw)
+                    clean = re.sub(r"\s+", " ", clean).strip()
+                    # Keep only the first sentence (prereq condition);
+                    # the catalog appends the course description after it
+                    first_sentence = re.split(r"\.\s+[A-Z]", clean)[0].rstrip(" .")
+                    prereqs = first_sentence if len(first_sentence) > 3 else None
+                    _prereqs_cache[cache_key] = prereqs
+                    return {"prerequisites": prereqs}
+    except Exception:
+        pass
+
+    _prereqs_cache[cache_key] = None
+    return {"prerequisites": None}
+
+
+@app.post("/share")
+async def create_share(schedule: Schedule):
+    """
+    Save a schedule and return a short ID that can be used to retrieve it.
+    The schedule is kept in memory; links expire when the server restarts.
+    """
+    share_id = uuid.uuid4().hex[:8]
+    _shared_schedules[share_id] = schedule.model_dump()
+    return {"id": share_id}
+
+
+@app.get("/share/{share_id}")
+async def get_share(share_id: str):
+    """Retrieve a previously shared schedule by its short ID."""
+    data = _shared_schedules.get(share_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Share link not found or expired")
+    return data

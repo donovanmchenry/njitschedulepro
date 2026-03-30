@@ -8,10 +8,9 @@ import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
 
 export default function Home() {
-  const { setCourses, setIsLoading, isLoading } = useAppStore();
+  const { setCourses, setIsLoading, isLoading, setSchedules } = useAppStore();
 
   useEffect(() => {
-    // Load courses from API on mount
     const loadCourses = async () => {
       setIsLoading(true);
       try {
@@ -27,6 +26,26 @@ export default function Home() {
 
     loadCourses();
   }, [setCourses, setIsLoading]);
+
+  // Load a shared schedule if ?share= is present in the URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareId = params.get('share');
+    if (!shareId) return;
+
+    fetch(apiUrl(`/share/${shareId}`))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setSchedules([data]);
+          // Remove the param from the address bar without reloading
+          const url = new URL(window.location.href);
+          url.searchParams.delete('share');
+          window.history.replaceState({}, '', url.toString());
+        }
+      })
+      .catch(() => {});
+  }, [setSchedules]);
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

@@ -48,10 +48,14 @@ export function CourseSelector() {
   // Check if search term looks like a CRN (5 digits)
   const looksLikeCRN = /^\d{4,6}$/.test(searchTerm.trim());
 
+  // Normalize: lowercase + strip all spaces so "cs114", "CS 114", "Cs114" all match
+  const normalizeQuery = (s: string) => s.toLowerCase().replace(/\s+/g, '');
+  const normalizedSearch = normalizeQuery(searchTerm);
+
   const filteredCourses = courses.filter(
     (course) =>
-      (course.course_key.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.title.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (normalizeQuery(course.course_key).includes(normalizedSearch) ||
+        course.title.toLowerCase().includes(searchTerm.toLowerCase().trim())) &&
       !selectedCourseKeys.includes(course.course_key)
   );
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { DAYS, DAY_NAMES, minutesToTime } from '@/types';
-import { Download, Bookmark, BookmarkPlus } from 'lucide-react';
+import { Download, Bookmark, BookmarkPlus, Share2, Check } from 'lucide-react';
 import { apiUrl } from '@/lib/api';
 
 interface RmpRating {
@@ -32,6 +32,8 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
   const schedule = propSchedule || schedules[selectedScheduleIndex];
 
   const [rmpRatings, setRmpRatings] = useState<Record<string, RmpRating | null>>({});
+  const [prereqs, setPrereqs] = useState<Record<string, string | null>>({});
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     if (!schedule) return;
@@ -48,6 +50,39 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
       .then(setRmpRatings)
       .catch(() => {});
   }, [schedule]);
+
+  // Fetch prerequisites for each unique course in the schedule
+  useEffect(() => {
+    if (!schedule) return;
+    const courseKeys = [...new Set(schedule.offerings.map((o) => o.course_key))];
+    courseKeys.forEach((key) => {
+      fetch(apiUrl(`/catalog/prerequisites/${encodeURIComponent(key)}`))
+        .then((r) => (r.ok ? r.json() : { prerequisites: null }))
+        .then((data) => {
+          setPrereqs((prev) => ({ ...prev, [key]: data.prerequisites ?? null }));
+        })
+        .catch(() => {});
+    });
+  }, [schedule]);
+
+  const handleShare = async () => {
+    if (!schedule) return;
+    try {
+      const resp = await fetch(apiUrl('/share'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(schedule),
+      });
+      if (!resp.ok) return;
+      const { id } = await resp.json();
+      const url = `${window.location.origin}${window.location.pathname}?share=${id}`;
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      // clipboard not available – silently ignore
+    }
+  };
 
   if (!schedule) return null;
 
@@ -159,6 +194,15 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
               {isBookmarked ? 'Saved' : 'Bookmark'}
             </button>
           )}
+          {!isBookmarkedView && (
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded-lg text-sm transition-colors"
+            >
+              {shareCopied ? <Check size={16} /> : <Share2 size={16} />}
+              {shareCopied ? 'Copied!' : 'Share'}
+            </button>
+          )}
           <button
             onClick={handleDownloadICS}
             className="flex items-center gap-2 px-3 py-2 bg-njit-red/10 hover:bg-njit-red/20 text-njit-red dark:bg-njit-red/30 dark:text-red-300 rounded-lg text-sm transition-colors"
@@ -231,7 +275,14 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
                                   height: `${height}px`,
                                   zIndex: 10
                                 }}
-                                title={`${offering.course_key} - ${offering.title}\n${offering.instructor || 'TBA'}\n${meeting.location || 'TBA'}`}
+                                title={[
+                                  `${offering.course_key} - ${offering.title}`,
+                                  offering.instructor || 'TBA',
+                                  meeting.location || 'TBA',
+                                  prereqs[offering.course_key]
+                                    ? `Prerequisites: ${prereqs[offering.course_key]}`
+                                    : null,
+                                ].filter(Boolean).join('\n')}
                               >
                                 <div className="font-bold">{offering.course_key}</div>
                                 <div className="text-xs truncate">{offering.section}</div>
@@ -257,6 +308,11 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
                                 </div>
                                 {meeting.location && (
                                   <div className="text-xs truncate">{meeting.location}</div>
+                                )}
+                                {prereqs[offering.course_key] && (
+                                  <div className="text-xs truncate opacity-75 italic">
+                                    Prereq: {prereqs[offering.course_key]}
+                                  </div>
                                 )}
                               </div>
                             );
