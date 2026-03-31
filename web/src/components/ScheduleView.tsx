@@ -34,6 +34,7 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
   const [rmpRatings, setRmpRatings] = useState<Record<string, RmpRating | null>>({});
   const [prereqs, setPrereqs] = useState<Record<string, string | null>>({});
   const [shareCopied, setShareCopied] = useState(false);
+  const [mobileDay, setMobileDay] = useState<string>('Mon');
 
   useEffect(() => {
     if (!schedule) return;
@@ -169,18 +170,18 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
   const isBookmarkedView = !!propSchedule;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
             {isBookmarkedView ? 'Saved Schedule' : `Schedule ${selectedScheduleIndex + 1}`}
           </h2>
           <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
             <span>{schedule.total_credits} credits</span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {!isBookmarkedView && (
             <button
               onClick={() => isBookmarked ? removeBookmark(bookmarkIndex) : addBookmark(schedule)}
@@ -220,8 +221,81 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
         </div>
       </div>
 
-      {/* Calendar grid */}
-      <div className="overflow-x-auto">
+      {/* Mobile: Day tabs + list view */}
+      <div className="sm:hidden">
+        {/* Day selector */}
+        <div className="flex gap-1 mb-3">
+          {DAYS.map((day) => {
+            const hasClasses = schedule.offerings.some((o) => o.meetings.some((m) => m.day === day));
+            if (!hasClasses) return null;
+            return (
+              <button
+                key={day}
+                onClick={() => setMobileDay(day)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold touch-manipulation transition-colors ${
+                  mobileDay === day
+                    ? 'bg-njit-red text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {({'Mon':'M','Tue':'T','Wed':'W','Thu':'R','Fri':'F'} as Record<string,string>)[day] ?? day.charAt(0)}
+              </button>
+            );
+          })}
+        </div>
+        {/* Classes for selected day */}
+        <div className="space-y-2">
+          {schedule.offerings
+            .filter((o) => o.meetings.some((m) => m.day === mobileDay))
+            .sort((a, b) => {
+              const aMin = Math.min(...a.meetings.filter((m) => m.day === mobileDay).map((m) => m.start_min));
+              const bMin = Math.min(...b.meetings.filter((m) => m.day === mobileDay).map((m) => m.start_min));
+              return aMin - bMin;
+            })
+            .map((offering) => {
+              const color = courseColorMap.get(offering.course_key) || COLORS[0];
+              const dayMeetings = offering.meetings.filter((m) => m.day === mobileDay);
+              return (
+                <div key={offering.crn} className={`${color} border-2 rounded-lg p-3`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-bold text-sm">{offering.course_key}</div>
+                    <div className="text-xs font-mono shrink-0">§{offering.section}</div>
+                  </div>
+                  {offering.instructor && offering.instructor !== 'nan' && (
+                    <div className="text-xs mt-1 flex items-center gap-1 flex-wrap">
+                      <span>{offering.instructor}</span>
+                      {rmpRatings[offering.instructor] && (
+                        <a
+                          href={rmpRatings[offering.instructor]!.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-semibold hover:underline opacity-80"
+                        >
+                          ★ {rmpRatings[offering.instructor]!.avg_rating.toFixed(1)}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  {dayMeetings.map((m, i) => (
+                    <div key={i} className="text-xs mt-1">
+                      {minutesToTime(m.start_min)}–{minutesToTime(m.end_min)}
+                      {m.location && <span className="ml-2 opacity-75">{m.location}</span>}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          {schedule.offerings.every((o) => !o.meetings.some((m) => m.day === mobileDay)) && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 italic text-center py-4">
+              No classes on {DAY_NAMES[mobileDay as keyof typeof DAY_NAMES]}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop: Calendar grid */}
+      <div className="hidden sm:block overflow-x-auto">
         <div className="inline-block min-w-full">
           <div className="grid grid-cols-6 gap-2">
             {/* Time column header */}

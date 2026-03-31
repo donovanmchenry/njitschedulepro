@@ -114,7 +114,7 @@ export function CourseSelector() {
             }
           }}
           placeholder="Search courses (e.g., CS 100) or enter CRN..."
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         {/* Dropdown */}
@@ -122,7 +122,7 @@ export function CourseSelector() {
           <>
             {/* Course search results */}
             {!showingSectionsFor && searchTerm && (looksLikeCRN || filteredCourses.length > 0) && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 sm:max-h-96 overflow-y-auto">
                 {/* CRN option if input looks like a CRN */}
                 {looksLikeCRN && !requiredCRNs.includes(searchTerm.trim()) && (
                   <button
@@ -162,7 +162,7 @@ export function CourseSelector() {
               if (!course) return null;
 
               return (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 sm:max-h-96 overflow-y-auto">
                   {/* Header with back button */}
                   <div className="sticky top-0 bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-600 px-4 py-2">
                     <div className="flex items-center justify-between">
@@ -200,7 +200,7 @@ export function CourseSelector() {
                         key={section.crn}
                         onClick={() => handleSelectSection(section.crn, course.course_key)}
                         disabled={isAlreadySelected}
-                        className={`w-full px-4 py-2 text-left border-b dark:border-gray-600 last:border-b-0 ${
+                        className={`w-full px-4 py-3 sm:py-2 text-left border-b dark:border-gray-600 last:border-b-0 ${
                           isAlreadySelected
                             ? 'bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
                             : 'hover:bg-gray-50 dark:hover:bg-gray-650'

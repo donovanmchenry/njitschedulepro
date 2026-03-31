@@ -60,15 +60,15 @@ export function ScheduleList() {
     schedules.indexOf(sortedSchedules[sortedIdx]);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-6">
+      <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
+        <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white shrink-0">
           All Schedules ({schedules.length})
         </h3>
         <select
           value={sortMode}
           onChange={(e) => setSortMode(e.target.value as SortMode)}
-          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-1"
+          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-2 max-w-[160px] sm:max-w-none"
         >
           <option value="score">Best Score</option>
           <option value="earliest">Earliest Start</option>
@@ -78,7 +78,7 @@ export function ScheduleList() {
         </select>
       </div>
 
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="space-y-2 max-h-64 sm:max-h-96 overflow-y-auto">
         {sortedSchedules.map((schedule, sortedIdx) => {
           const origIdx = originalIndex(sortedIdx);
           const isSelected = origIdx === selectedScheduleIndex;

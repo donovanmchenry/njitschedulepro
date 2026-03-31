@@ -49,18 +49,18 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="absolute right-4 top-4">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
           <ThemeToggle />
         </div>
-        <header className="mb-8 text-center">
+        <header className="mb-4 sm:mb-8 text-center">
           <div className="flex justify-center">
             <Image
               src="/scheduleprologo.png"
               alt="NJIT Schedule Pro logo"
               width={612}
               height={408}
-              className="h-32 w-auto"
+              className="h-20 sm:h-32 w-auto"
               priority
             />
           </div>

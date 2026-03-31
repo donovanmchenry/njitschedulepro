@@ -127,15 +127,15 @@ export function ScheduleBuilder() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-6">
       {/* Left panel - Builder */}
       <div className="lg:col-span-1 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-4 md:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800 dark:text-white">
             Build Your Schedule
           </h2>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* AI Input — hidden until secure implementation is ready */}
             {/* <section>
               <AIScheduleInput onConstraintsParsed={handleAIParsed} />
@@ -159,7 +159,7 @@ export function ScheduleBuilder() {
             {/* Availability */}
             <section>
               <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">
-                Availability Constraints
+                Unavailable Times
               </h3>
               <AvailabilityEditor />
             </section>
@@ -207,32 +207,32 @@ export function ScheduleBuilder() {
         <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
           <button
             onClick={() => setActiveTab('generated')}
-            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors border-b-2 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 font-semibold transition-colors border-b-2 text-sm sm:text-base touch-manipulation ${
               activeTab === 'generated'
                 ? 'border-njit-red text-njit-red dark:text-red-400'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
-            <Calendar size={18} />
-            Generated Schedules
+            <Calendar size={16} />
+            <span className="hidden xs:inline sm:inline">Generated </span>Schedules
             {schedules.length > 0 && (
-              <span className="ml-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
+              <span className="ml-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
                 {schedules.length}
               </span>
             )}
           </button>
           <button
             onClick={() => setActiveTab('bookmarks')}
-            className={`flex items-center gap-2 px-4 py-3 font-semibold transition-colors border-b-2 ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 font-semibold transition-colors border-b-2 text-sm sm:text-base touch-manipulation ${
               activeTab === 'bookmarks'
                 ? 'border-njit-red text-njit-red dark:text-red-400'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
-            <Bookmark size={18} />
+            <Bookmark size={16} />
             Bookmarks
             {bookmarkedSchedules.length > 0 && (
-              <span className="ml-1 px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
+              <span className="ml-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
                 {bookmarkedSchedules.length}
               </span>
             )}
@@ -247,10 +247,10 @@ export function ScheduleBuilder() {
               <ScheduleList />
             </>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-12 text-center">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-12 text-center">
               <div className="text-gray-400 dark:text-gray-500">
                 <svg
-                  className="mx-auto h-24 w-24 mb-4"
+                  className="mx-auto h-16 w-16 sm:h-24 sm:w-24 mb-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"

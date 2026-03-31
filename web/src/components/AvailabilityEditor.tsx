@@ -13,7 +13,7 @@ function selectsToMinutes(hour: string, minute: string, period: 'AM' | 'PM'): nu
 }
 
 const SELECT_CLASS =
-  'px-2 py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg text-sm';
+  'px-2 py-2.5 sm:py-2 border dark:border-gray-600 dark:bg-gray-600 dark:text-white rounded-lg text-base sm:text-sm';
 
 export function AvailabilityEditor() {
   const {
@@ -62,7 +62,7 @@ export function AvailabilityEditor() {
           </select>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label className="block text-sm font-medium mb-1 dark:text-gray-200">From</label>
             <div className="flex gap-1">
@@ -105,7 +105,7 @@ export function AvailabilityEditor() {
 
         <button
           onClick={handleAddBlock}
-          className="w-full bg-njit-red hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm transition-colors shadow-md"
+          className="w-full bg-njit-red hover:bg-red-700 text-white py-3 px-4 rounded-lg text-sm font-medium transition-colors shadow-md touch-manipulation"
         >
           Add Unavailable Time
         </button>
