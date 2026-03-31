@@ -13,7 +13,7 @@ function selectsToMinutes(hour: string, minute: string, period: 'AM' | 'PM'): nu
 }
 
 const DAY_LABELS: Record<DayOfWeek, string> = {
-  Mon: 'M', Tue: 'T', Wed: 'W', Thu: 'R', Fri: 'F',
+  Mon: 'M', Tue: 'T', Wed: 'W', Thu: 'R', Fri: 'F', Sat: 'S', Sun: 'U',
 };
 
 function TimePicker({
