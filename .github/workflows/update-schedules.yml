@@ -5,12 +5,12 @@ on:
     # Every 4 hours normally
     - cron: '0 */4 * * *'
     # Every 5 minutes during registration week: April 12-17 (all hours, all days)
-    # Registration opens 9:30 PM EDT = 1:30 AM UTC the following day:
-    #   Seniors Apr 12 → 1:30 AM UTC Apr 13
-    #   Juniors Apr 13 → 1:30 AM UTC Apr 14
-    #   Sophomores Apr 14 → 1:30 AM UTC Apr 15
-    #   First Years Apr 15 → 1:30 AM UTC Apr 16
-    #   All students Apr 16 → 1:30 AM UTC Apr 17
+    # Registration opens 9:30 PM EDT = 1:30 AM UTC the next day:
+    #   Seniors Apr 12 -> 1:30 AM UTC Apr 13
+    #   Juniors Apr 13 -> 1:30 AM UTC Apr 14
+    #   Sophomores Apr 14 -> 1:30 AM UTC Apr 15
+    #   First Years Apr 15 -> 1:30 AM UTC Apr 16
+    #   All students Apr 16 -> 1:30 AM UTC Apr 17
     - cron: '*/5 * 12-17 4 *'
   workflow_dispatch: # Allow manual triggering
 
