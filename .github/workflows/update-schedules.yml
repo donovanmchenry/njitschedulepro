@@ -71,15 +71,18 @@ jobs:
           git push
 
       - name: Trigger API reload
-        if: steps.check_changes.outputs.has_changes == 'true' && secrets.API_URL != ''
+        if: steps.check_changes.outputs.has_changes == 'true'
         env:
           API_URL: ${{ secrets.API_URL }}
           RELOAD_SECRET: ${{ secrets.RELOAD_SECRET }}
         run: |
-          curl -sf -X POST "${API_URL}/reload" \
-            -H "X-Reload-Secret: ${RELOAD_SECRET}" \
-            && echo "API catalog reloaded successfully" \
-            || echo "Warning: API reload request failed (server may need manual restart)"
+          if [ -z "${API_URL}" ]; then
+            echo "API_URL secret not set, skipping reload"
+          else
+            curl -sf -X POST "${API_URL}/reload" -H "X-Reload-Secret: ${RELOAD_SECRET}" \
+              && echo "API catalog reloaded successfully" \
+              || echo "Warning: API reload request failed (server may need manual restart)"
+          fi
 
       - name: No changes detected
         if: steps.check_changes.outputs.has_changes == 'false'
