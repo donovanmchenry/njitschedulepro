@@ -398,6 +398,86 @@ class NJITSeleniumScraper:
             # Always stop the driver
             self.stop_driver()
 
+    def scrape_subject_list(self, subjects: list, term: str = None, delay: float = 1.0, restart_interval: int = 25):
+        """
+        Scrape a pre-defined list of subjects. Used by the parallel scraper so
+        each worker receives its own chunk instead of fetching all subjects.
+
+        Args:
+            subjects: List of subject codes to scrape (e.g., ['CS', 'MATH', ...])
+            term: Term code. If None, uses default.
+            delay: Delay in seconds between subjects.
+            restart_interval: Restart browser after this many subjects.
+        """
+        try:
+            self.start_driver()
+            self.load_page()
+            self.select_term(term)
+
+            total = len(subjects)
+            successful = 0
+            failed = []
+            subjects_since_restart = 0
+
+            logger.info(f"[Worker] Starting chunk of {total} subjects...")
+
+            for i, subject in enumerate(subjects, 1):
+                logger.info(f"[Worker] {i}/{total}: {subject}")
+
+                if subjects_since_restart >= restart_interval and i < total:
+                    logger.info(f"[Worker] Scheduled restart after {subjects_since_restart} subjects...")
+                    self._restart_browser(term)
+                    subjects_since_restart = 0
+                    time.sleep(2)
+
+                max_retries = 2
+                retry_count = 0
+                subject_success = False
+
+                while retry_count < max_retries and not subject_success:
+                    try:
+                        if not self.click_subject(subject):
+                            logger.warning(f"[Worker] Could not find subject: {subject}")
+                            break
+                        self.wait_for_sections_to_load()
+                        self.download_excel()
+                        self.wait_for_download()
+                        successful += 1
+                        subjects_since_restart += 1
+                        subject_success = True
+                        logger.info(f"[Worker] Downloaded {subject}")
+                    except Exception as e:
+                        error_msg = str(e)
+                        if "invalid session" in error_msg.lower() or "session deleted" in error_msg.lower():
+                            if self._restart_browser(term):
+                                subjects_since_restart = 0
+                                retry_count += 1
+                                if retry_count < max_retries:
+                                    time.sleep(2)
+                                    continue
+                            else:
+                                raise
+                        else:
+                            logger.error(f"[Worker] Error on {subject}: {e}")
+                        retry_count += 1
+                        if retry_count >= max_retries:
+                            break
+                        time.sleep(2)
+
+                if not subject_success:
+                    failed.append(subject)
+                    subjects_since_restart += 1
+
+                if i < total:
+                    time.sleep(delay)
+
+            logger.info(f"[Worker] Done. Successful: {successful}/{total}")
+            if failed:
+                logger.info(f"[Worker] Failed: {', '.join(failed)}")
+
+        finally:
+            self.stop_driver()
+
     def scrape_single_subject(self, subject: str, term: str = None):
         """
         Scrape a single subject.
