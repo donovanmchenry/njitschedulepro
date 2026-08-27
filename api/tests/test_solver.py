@@ -12,7 +12,7 @@ from app.models import (
     SolveRequest,
     Status,
 )
-from app.solver import solve_schedules
+from app.solver import ScheduleSolver, solve_schedules
 
 
 class TestScheduleSolver:
@@ -306,3 +306,62 @@ class TestScheduleSolver:
             sig = frozenset(o.crn for o in schedule.offerings)
             assert sig not in seen
             seen.add(sig)
+
+    def test_adjacent_meetings_do_not_conflict(self):
+        """A class may begin exactly when another one ends."""
+        offerings = [
+            Offering(
+                crn="10001",
+                course_key="CS 101",
+                section="001",
+                title="First",
+                meetings=[
+                    Meeting(day=DayOfWeek.MONDAY, start_min=540, end_min=600)
+                ],
+                credits=3.0,
+            ),
+            Offering(
+                crn="10002",
+                course_key="CS 102",
+                section="001",
+                title="Second",
+                meetings=[
+                    Meeting(day=DayOfWeek.MONDAY, start_min=600, end_min=660)
+                ],
+                credits=3.0,
+            ),
+        ]
+
+        schedules = solve_schedules(
+            offerings,
+            SolveRequest(required_course_keys=["CS 101", "CS 102"]),
+        )
+
+        assert len(schedules) == 1
+
+    def test_candidate_search_stops_at_the_configured_bound(self):
+        """Large section combinations do not trigger exhaustive traversal."""
+        offerings = []
+        for course_number in range(101, 105):
+            for section_number in range(10):
+                offerings.append(
+                    Offering(
+                        crn=f"{course_number}{section_number:02d}",
+                        course_key=f"CS {course_number}",
+                        section=f"{section_number:03d}",
+                        title=f"Course {course_number}",
+                        meetings=[],
+                        credits=3.0,
+                    )
+                )
+
+        request = SolveRequest(
+            required_course_keys=["CS 101", "CS 102", "CS 103", "CS 104"],
+            max_results=1,
+        )
+        solver = ScheduleSolver(offerings, request)
+
+        schedules = solver.solve()
+
+        assert len(schedules) == 1
+        assert len(solver.results) == solver.max_candidates == 200

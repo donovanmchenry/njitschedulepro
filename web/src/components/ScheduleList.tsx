@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock3, UsersRound } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import {
@@ -21,16 +21,31 @@ type SortMode = 'score' | 'earliest' | 'latest' | 'gaps' | 'days';
 export function ScheduleList() {
   const { schedules, selectedScheduleIndex, setSelectedScheduleIndex } = useAppStore();
   const [sortMode, setSortMode] = useState<SortMode>('score');
+  const [visibleCount, setVisibleCount] = useState(20);
+
+  useEffect(() => setVisibleCount(20), [schedules, sortMode]);
+
+  const sortedSchedules = useMemo(() => {
+    const items = schedules.map((schedule, originalIndex) => ({
+      schedule,
+      originalIndex,
+      days: classDays(schedule),
+      professors: instructorNames(schedule),
+      start: earliestStart(schedule),
+      end: latestEnd(schedule),
+      gaps: totalGapMinutes(schedule),
+      closedCount: getClosedOfferings(schedule).length,
+    }));
+    return items.sort((left, right) => {
+      if (sortMode === 'earliest') return left.start - right.start;
+      if (sortMode === 'latest') return right.start - left.start;
+      if (sortMode === 'gaps') return left.gaps - right.gaps;
+      if (sortMode === 'days') return left.days.length - right.days.length;
+      return left.schedule.score - right.schedule.score;
+    });
+  }, [schedules, sortMode]);
 
   if (schedules.length === 0) return null;
-
-  const sortedSchedules = [...schedules].sort((a, b) => {
-    if (sortMode === 'earliest') return earliestStart(a) - earliestStart(b);
-    if (sortMode === 'latest') return earliestStart(b) - earliestStart(a);
-    if (sortMode === 'gaps') return totalGapMinutes(a) - totalGapMinutes(b);
-    if (sortMode === 'days') return classDays(a).length - classDays(b).length;
-    return a.score - b.score;
-  });
 
   return (
     <div className={`${panelClass} p-3`}>
@@ -51,14 +66,9 @@ export function ScheduleList() {
       </div>
 
       <div className="grid max-h-[32rem] grid-cols-1 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
-        {sortedSchedules.map((schedule) => {
-          const originalIndex = schedules.indexOf(schedule);
+        {sortedSchedules.slice(0, visibleCount).map((item) => {
+          const { schedule, originalIndex, days, professors, start, end, gaps, closedCount } = item;
           const selected = originalIndex === selectedScheduleIndex;
-          const days = classDays(schedule);
-          const professors = instructorNames(schedule);
-          const start = earliestStart(schedule);
-          const end = latestEnd(schedule);
-          const closedCount = getClosedOfferings(schedule).length;
 
           return (
             <button
@@ -92,7 +102,7 @@ export function ScheduleList() {
                   <Clock3 size={14} className="shrink-0 text-gray-400" />
                   <span>
                     {Number.isFinite(start) ? `${minutesToTime(start)} to ${minutesToTime(end)}` : 'No fixed meeting time'}
-                    {' · '}{formatGap(totalGapMinutes(schedule))}
+                    {' · '}{formatGap(gaps)}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -104,6 +114,15 @@ export function ScheduleList() {
           );
         })}
       </div>
+      {visibleCount < sortedSchedules.length && (
+        <button
+          type="button"
+          onClick={() => setVisibleCount((count) => count + 20)}
+          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          Show {Math.min(20, sortedSchedules.length - visibleCount)} more
+        </button>
+      )}
     </div>
   );
 }

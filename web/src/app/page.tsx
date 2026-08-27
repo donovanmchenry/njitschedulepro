@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Notice } from '@/components/Notice';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
+import { loadCatalogIndex } from '@/lib/catalog';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
@@ -17,11 +18,12 @@ export default function Home() {
     const loadCourses = async () => {
       setCatalogState('loading');
       try {
-        const response = await fetch(apiUrl('/catalog/courses'));
-        if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`);
-        const data = await response.json();
+        performance.mark('catalog-load-start');
+        const data = await loadCatalogIndex();
         setCourses(data.courses || []);
         setCatalogState('ready');
+        performance.mark('catalog-ready');
+        performance.measure('catalog-load', 'catalog-load-start', 'catalog-ready');
       } catch (error) {
         console.error('Failed to load courses:', error);
         setCatalogState('error');
@@ -60,6 +62,7 @@ export default function Home() {
               alt="NJIT Schedule Pro"
               width={612}
               height={408}
+              sizes="60px"
               className="h-10 w-auto shrink-0"
               priority
             />
