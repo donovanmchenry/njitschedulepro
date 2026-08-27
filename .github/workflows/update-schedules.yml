@@ -52,10 +52,13 @@ jobs:
           echo "Starting scraper..."
           python auto_update_scheduler.py --scrape-dir data/temp_scrape --catalog-dir ../courseschedules --workers 5
 
+      - name: Build frontend catalog assets
+        run: python scripts/build_catalog_assets.py
+
       - name: Check for changes
         id: check_changes
         run: |
-          if git diff --quiet courseschedules/ && git diff --cached --quiet courseschedules/; then
+          if git diff --quiet courseschedules/ web/public/catalog/ && git diff --cached --quiet courseschedules/ web/public/catalog/; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
@@ -66,7 +69,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add courseschedules/
+          git add courseschedules/ web/public/catalog/
           git commit -m "Auto-update course schedules - $(date '+%Y-%m-%d %H:%M')"
           git push
 

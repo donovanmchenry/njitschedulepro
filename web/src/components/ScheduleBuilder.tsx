@@ -1,12 +1,10 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { CourseSelector } from './CourseSelector';
 import { AvailabilityEditor } from './AvailabilityEditor';
 import { FiltersPanel } from './FiltersPanel';
-import { ScheduleView } from './ScheduleView';
-import { ScheduleList } from './ScheduleList';
-import { BookmarkedSchedules } from './BookmarkedSchedules';
 import { AIScheduleInput } from './AIScheduleInput';
 import { EmptyState } from './EmptyState';
 import { Notice } from './Notice';
@@ -15,6 +13,16 @@ import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
 import { primaryButtonClass } from '@/lib/uiStyles';
 import { Calendar, Bookmark } from 'lucide-react';
+
+const ScheduleView = dynamic(() =>
+  import('./ScheduleView').then((module) => module.ScheduleView)
+);
+const ScheduleList = dynamic(() =>
+  import('./ScheduleList').then((module) => module.ScheduleList)
+);
+const BookmarkedSchedules = dynamic(() =>
+  import('./BookmarkedSchedules').then((module) => module.BookmarkedSchedules)
+);
 
 type Tab = 'generated' | 'bookmarks';
 
@@ -151,7 +159,7 @@ export function ScheduleBuilder() {
       max_credits: maxCredits,
       unavailable: unavailableBlocks,
       filters,
-      max_results: 500,
+      max_results: 50,
     };
 
     try {
@@ -193,7 +201,7 @@ export function ScheduleBuilder() {
     ...selectedCourseKeys,
     ...requiredCRNs
       .map((crn) =>
-        courses.find((course) => course.sections.some((section) => section.crn === crn))
+        courses.find((course) => course.sections?.some((section) => section.crn === crn))
           ?.course_key
       )
       .filter((courseKey): courseKey is string => Boolean(courseKey)),

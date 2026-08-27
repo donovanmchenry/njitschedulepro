@@ -121,6 +121,7 @@ export interface AIParseResult {
     duration_ms: number;
     input_tokens: number;
     output_tokens: number;
+    cache_hit?: boolean;
   };
 }
 
@@ -130,17 +131,34 @@ export interface Schedule {
   score: number;
 }
 
+export interface CourseSection {
+  crn: string;
+  section: string;
+  status: Status;
+  delivery: DeliveryMode;
+  instructor: string | null;
+  credits: number | null;
+}
+
 export interface Course {
   course_key: string;
   title: string;
-  sections: {
-    crn: string;
-    section: string;
-    status: string;
-    delivery: string;
-    instructor: string | null;
-    credits: number | null;
-  }[];
+  subject: string;
+  section_count: number;
+  open_section_count: number;
+  sections?: CourseSection[];
+}
+
+export interface CatalogIndex {
+  version: string;
+  courses: Course[];
+  total: number;
+}
+
+export interface SubjectCatalog {
+  version: string;
+  subject: string;
+  courses: Course[];
 }
 
 // Helper functions

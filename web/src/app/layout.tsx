@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: 'NJIT Schedule Pro',
   description: 'Production-ready course schedule generator for NJIT',
   icons: {
-    icon: '/scheduleprologo.png',
+    icon: '/scheduleproicon.png',
   },
 };
 
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

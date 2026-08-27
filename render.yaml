@@ -4,8 +4,8 @@ services:
     name: njit-schedule-pro-api
     runtime: python
     region: oregon
-    plan: free
-    buildCommand: "cd api && pip install poetry && poetry install --only main"
+    plan: 0.5c-512mb
+    buildCommand: "cd api && pip install poetry && poetry install --only main --no-root"
     startCommand: "cd api && poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
@@ -21,6 +21,8 @@ services:
           type: keyvalue
           name: njit-schedule-pro-rate-limits
           property: connectionString
+      - key: SOLVE_CONCURRENCY
+        value: 1
     autoDeploy: true
     healthCheckPath: /
 
@@ -42,7 +44,7 @@ services:
   #   startCommand: "cd web && pnpm start"
   #   envVars:
   #     - key: NODE_VERSION
-  #       value: 18
-    #     - key: NEXT_PUBLIC_API_BASE_URL
+  #       value: 22
+  #     - key: NEXT_PUBLIC_API_BASE_URL
   #       sync: false  # Set this in Render dashboard to your API URL
   #   autoDeploy: true

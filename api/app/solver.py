@@ -11,6 +11,35 @@ from app.models import (
     SolveRequest,
 )
 
+DAY_OFFSETS = {
+    DayOfWeek.MONDAY: 0,
+    DayOfWeek.TUESDAY: 1440,
+    DayOfWeek.WEDNESDAY: 2880,
+    DayOfWeek.THURSDAY: 4320,
+    DayOfWeek.FRIDAY: 5760,
+    DayOfWeek.SATURDAY: 7200,
+    DayOfWeek.SUNDAY: 8640,
+}
+
+
+def _time_range_mask(day: DayOfWeek, start_min: int, end_min: int) -> int:
+    duration = max(0, end_min - start_min)
+    if duration == 0:
+        return 0
+    return ((1 << duration) - 1) << (DAY_OFFSETS[day] + start_min)
+
+
+def _offering_mask(offering: Offering) -> int:
+    mask = 0
+    for meeting in offering.meetings:
+        mask |= _time_range_mask(meeting.day, meeting.start_min, meeting.end_min)
+    return mask
+
+
+def build_offering_masks(catalog: List[Offering]) -> Dict[str, int]:
+    """Precompute weekly occupancy once per catalog version."""
+    return {offering.crn: _offering_mask(offering) for offering in catalog}
+
 
 class ScheduleSolver:
     """
@@ -24,7 +53,14 @@ class ScheduleSolver:
     5. Computes soft scores for ranking
     """
 
-    def __init__(self, catalog: List[Offering], request: SolveRequest):
+    def __init__(
+        self,
+        catalog: List[Offering],
+        request: SolveRequest,
+        offerings_by_course: Dict[str, List[Offering]] | None = None,
+        offerings_by_crn: Dict[str, Offering] | None = None,
+        offering_masks: Dict[str, int] | None = None,
+    ):
         """
         Initialize solver with catalog and request.
 
@@ -36,16 +72,29 @@ class ScheduleSolver:
         self.request = request
         self.results: List[Schedule] = []
         self.seen_signatures: Set[frozenset] = set()
+        self.max_candidates = max(request.max_results * 4, 200)
+        self.offering_masks = offering_masks or build_offering_masks(catalog)
 
-        # Group offerings by course key
-        self.offerings_by_course: Dict[str, List[Offering]] = defaultdict(list)
-        for offering in catalog:
-            self.offerings_by_course[offering.course_key].append(offering)
+        # Copy precomputed catalog indexes so per-request filtering cannot mutate shared state.
+        if offerings_by_course is None:
+            grouped: Dict[str, List[Offering]] = defaultdict(list)
+            for offering in catalog:
+                grouped[offering.course_key].append(offering)
+            self.offerings_by_course = dict(grouped)
+        else:
+            self.offerings_by_course = {
+                course_key: list(offerings)
+                for course_key, offerings in offerings_by_course.items()
+            }
+
+        self.unavailable_mask = 0
+        for block in request.unavailable:
+            self.unavailable_mask |= _time_range_mask(block.day, block.start_min, block.end_min)
 
         # Extract required CRN offerings
         self.required_crn_offerings: List[Offering] = []
         if request.required_crns:
-            crn_map = {o.crn: o for o in catalog}
+            crn_map = offerings_by_crn or {o.crn: o for o in catalog}
             for crn in request.required_crns:
                 if crn in crn_map:
                     self.required_crn_offerings.append(crn_map[crn])
@@ -56,11 +105,6 @@ class ScheduleSolver:
 
         # Pre-filter offerings
         self._prefilter_offerings()
-
-        # Build unavailable blocks lookup
-        self.unavailable_by_day: Dict[DayOfWeek, List[Tuple[int, int]]] = defaultdict(list)
-        for block in request.unavailable:
-            self.unavailable_by_day[block.day].append((block.start_min, block.end_min))
 
     def _prefilter_offerings(self):
         """Pre-filter offerings based on request filters."""
@@ -132,6 +176,9 @@ class ScheduleSolver:
                 if not offering.is_honors and not filters.include_non_honors:
                     continue
 
+                if self._conflicts_with_availability(offering):
+                    continue
+
                 filtered.append(offering)
 
             self.offerings_by_course[course_key] = filtered
@@ -201,7 +248,7 @@ class ScheduleSolver:
         required_courses: List[str],
     ):
         """Choose distinct current-term courses for each requirement group."""
-        if len(self.results) >= self.request.max_results * 2:
+        if len(self.results) >= self.max_candidates:
             return
 
         if group_idx >= len(groups):
@@ -210,7 +257,15 @@ class ScheduleSolver:
                 course_keys,
                 key=lambda course_key: len(self.offerings_by_course.get(course_key, [])),
             )
-            self._backtrack(course_keys, 0, self.required_crn_offerings.copy())
+            required_mask = 0
+            for offering in self.required_crn_offerings:
+                required_mask |= self.offering_masks.get(offering.crn, 0)
+            self._backtrack(
+                course_keys,
+                0,
+                self.required_crn_offerings.copy(),
+                required_mask,
+            )
             return
 
         group = groups[group_idx]
@@ -234,10 +289,16 @@ class ScheduleSolver:
                 chosen_course_keys + list(selected),
                 required_courses,
             )
-            if len(self.results) >= self.request.max_results * 2:
+            if len(self.results) >= self.max_candidates:
                 return
 
-    def _backtrack(self, course_keys: List[str], course_idx: int, current_schedule: List[Offering]):
+    def _backtrack(
+        self,
+        course_keys: List[str],
+        course_idx: int,
+        current_schedule: List[Offering],
+        occupied_mask: int,
+    ):
         """
         Recursive backtracking to build schedules.
 
@@ -246,6 +307,9 @@ class ScheduleSolver:
             course_idx: Current course index being processed
             current_schedule: Current partial schedule
         """
+        if len(self.results) >= self.max_candidates:
+            return
+
         # Base case: all courses scheduled
         if course_idx >= len(course_keys):
             if self._exceeds_max_gap(current_schedule):
@@ -274,10 +338,6 @@ class ScheduleSolver:
             )
             self.results.append(schedule)
 
-            # Early termination if we have enough results
-            if len(self.results) >= self.request.max_results * 2:
-                return
-
             return
 
         # Recursive case: try each offering for current course
@@ -285,18 +345,21 @@ class ScheduleSolver:
         offerings = self.offerings_by_course.get(course_key, [])
 
         for offering in offerings:
-            # Check for conflicts with current schedule
-            if self._has_conflict(offering, current_schedule):
-                continue
-
-            # Check availability conflicts (strict - no violations allowed)
-            if self._conflicts_with_availability(offering):
+            offering_mask = self.offering_masks.get(offering.crn, 0)
+            if occupied_mask & offering_mask:
                 continue
 
             # Add to schedule and recurse
             current_schedule.append(offering)
-            self._backtrack(course_keys, course_idx + 1, current_schedule)
+            self._backtrack(
+                course_keys,
+                course_idx + 1,
+                current_schedule,
+                occupied_mask | offering_mask,
+            )
             current_schedule.pop()
+            if len(self.results) >= self.max_candidates:
+                return
 
     def _has_conflict(self, offering: Offering, schedule: List[Offering]) -> bool:
         """Check if offering conflicts with any offering in the schedule."""
@@ -315,13 +378,7 @@ class ScheduleSolver:
         Returns:
             True if there are any conflicts, False otherwise
         """
-        for meeting in offering.meetings:
-            unavailable_blocks = self.unavailable_by_day.get(meeting.day, [])
-            for unavail_start, unavail_end in unavailable_blocks:
-                conflicts, _ = meeting.conflicts_with_unavailable(unavail_start, unavail_end)
-                if conflicts:
-                    return True
-        return False
+        return bool(self.offering_masks.get(offering.crn, 0) & self.unavailable_mask)
 
     def _compute_score(self, schedule: List[Offering]) -> float:
         """
@@ -444,7 +501,13 @@ class ScheduleSolver:
         return False
 
 
-def solve_schedules(catalog: List[Offering], request: SolveRequest) -> List[Schedule]:
+def solve_schedules(
+    catalog: List[Offering],
+    request: SolveRequest,
+    offerings_by_course: Dict[str, List[Offering]] | None = None,
+    offerings_by_crn: Dict[str, Offering] | None = None,
+    offering_masks: Dict[str, int] | None = None,
+) -> List[Schedule]:
     """
     Main entry point for schedule solving.
 
@@ -455,5 +518,11 @@ def solve_schedules(catalog: List[Offering], request: SolveRequest) -> List[Sche
     Returns:
         List of valid schedules, sorted by score
     """
-    solver = ScheduleSolver(catalog, request)
+    solver = ScheduleSolver(
+        catalog,
+        request,
+        offerings_by_course,
+        offerings_by_crn,
+        offering_masks,
+    )
     return solver.solve()

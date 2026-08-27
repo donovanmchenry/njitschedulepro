@@ -44,7 +44,7 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
     if (!schedule) return;
     const names = [...new Set(
       schedule.offerings.map((o) => o.instructor).filter((n): n is string => !!n && n !== 'nan')
-    )];
+    )].filter((name) => !(name in rmpRatings));
     if (!names.length) return;
     fetch(apiUrl('/professors/ratings'), {
       method: 'POST',
@@ -52,23 +52,26 @@ export function ScheduleView({ schedule: propSchedule }: ScheduleViewProps = {})
       body: JSON.stringify({ names }),
     })
       .then((r) => (r.ok ? r.json() : {}))
-      .then(setRmpRatings)
+      .then((data) => setRmpRatings((previous) => ({ ...previous, ...data })))
       .catch(() => {});
-  }, [schedule]);
+  }, [rmpRatings, schedule]);
 
-  // Fetch prerequisites for each unique course in the schedule
+  // Fetch prerequisites for the displayed schedule in one request and retain prior results.
   useEffect(() => {
     if (!schedule) return;
-    const courseKeys = [...new Set(schedule.offerings.map((o) => o.course_key))];
-    courseKeys.forEach((key) => {
-      fetch(apiUrl(`/catalog/prerequisites/${encodeURIComponent(key)}`))
-        .then((r) => (r.ok ? r.json() : { prerequisites: null }))
-        .then((data) => {
-          setPrereqs((prev) => ({ ...prev, [key]: data.prerequisites ?? null }));
-        })
-        .catch(() => {});
-    });
-  }, [schedule]);
+    const courseKeys = [...new Set(schedule.offerings.map((o) => o.course_key))].filter(
+      (key) => !(key in prereqs)
+    );
+    if (!courseKeys.length) return;
+    fetch(apiUrl('/catalog/prerequisites'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ course_keys: courseKeys }),
+    })
+      .then((response) => (response.ok ? response.json() : {}))
+      .then((data) => setPrereqs((previous) => ({ ...previous, ...data })))
+      .catch(() => {});
+  }, [prereqs, schedule]);
 
   useEffect(() => {
     if (!schedule) return;

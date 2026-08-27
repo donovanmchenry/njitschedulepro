@@ -11,6 +11,6 @@
     "test:coverage": "poetry run pytest --cov=app --cov-report=html",
     "lint": "poetry run ruff check app tests",
     "format": "poetry run black app tests",
-    "install": "if command -v poetry >/dev/null 2>&1; then poetry install; else echo \"Poetry not found, skipping backend dependency install\"; fi"
+    "install": "if command -v poetry >/dev/null 2>&1; then poetry install --no-root; else echo \"Poetry not found, skipping backend dependency install\"; fi"
   }
 }

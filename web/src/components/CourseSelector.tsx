@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
+import { loadSubjectCatalog } from '@/lib/catalog';
 import { X } from 'lucide-react';
 import { fieldControlClass, iconButtonClass, secondaryButtonClass } from '@/lib/uiStyles';
 import {
@@ -31,18 +32,53 @@ export function CourseSelector() {
     removeCourseChoiceGroup,
     addRequiredCRN,
     removeRequiredCRN,
+    mergeCourseDetails,
   } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showingSectionsFor, setShowingSectionsFor] = useState<string | null>(null);
   const [rmpRatings, setRmpRatings] = useState<Record<string, RmpRating | null>>({});
+  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [sectionsError, setSectionsError] = useState(false);
+
+  useEffect(() => {
+    if (!showingSectionsFor) return;
+    const course = courses.find((current) => current.course_key === showingSectionsFor);
+    if (!course || course.sections) return;
+    let cancelled = false;
+    setSectionsLoading(true);
+    setSectionsError(false);
+    loadSubjectCatalog(course.subject)
+      .then((data) => {
+        if (!cancelled) {
+          // Clear this before the store update triggers the effect cleanup.
+          setSectionsLoading(false);
+          mergeCourseDetails(data.courses);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSectionsError(true);
+          setSectionsLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [courses, mergeCourseDetails, showingSectionsFor]);
 
   // Fetch RMP ratings when a course's sections are expanded
   useEffect(() => {
     if (!showingSectionsFor) return;
     const course = courses.find((c) => c.course_key === showingSectionsFor);
-    if (!course) return;
-    const names = [...new Set(course.sections.map((s) => s.instructor).filter(Boolean))] as string[];
+    if (!course?.sections) return;
+    const names = [
+      ...new Set(
+        course.sections
+          .map((section) => section.instructor)
+          .filter((name): name is string => Boolean(name) && !(name! in rmpRatings))
+      ),
+    ];
     if (!names.length) return;
 
     fetch(apiUrl('/professors/ratings'), {
@@ -53,7 +89,7 @@ export function CourseSelector() {
       .then((r) => (r.ok ? r.json() : {}))
       .then((data) => setRmpRatings((prev) => ({ ...prev, ...data })))
       .catch(() => {});
-  }, [courses, showingSectionsFor]);
+  }, [courses, rmpRatings, showingSectionsFor]);
 
   // Check if search term looks like a CRN (5 digits)
   const looksLikeCRN = /^\d{4,6}$/.test(searchTerm.trim());
@@ -112,9 +148,7 @@ export function CourseSelector() {
       eligible_course_keys: matchingCourses.map((course) => course.course_key),
       choose,
       total_course_count: matchingCourses.length,
-      open_course_count: matchingCourses.filter((course) =>
-        course.sections.some((section) => section.status === 'Open')
-      ).length,
+      open_course_count: matchingCourses.filter((course) => course.open_section_count > 0).length,
       departments: electiveRequirement.departments,
       minimum_level: electiveRequirement.minimumLevel,
       source_text: searchTerm,
@@ -246,7 +280,7 @@ export function CourseSelector() {
                     <div className="font-semibold text-sm dark:text-white">{course.course_key}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{course.title}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {course.sections.length} {course.sections.length === 1 ? 'section' : 'sections'} available
+                      {course.section_count} {course.section_count === 1 ? 'section' : 'sections'} available
                     </div>
                   </button>
                 ))}
@@ -295,8 +329,19 @@ export function CourseSelector() {
                     </div>
                   </button>
 
+                  {sectionsLoading && (
+                    <div className="px-3 py-4 text-center text-xs text-gray-500 dark:text-gray-400">
+                      Loading sections…
+                    </div>
+                  )}
+                  {sectionsError && (
+                    <div className="px-3 py-4 text-center text-xs text-red-600 dark:text-red-400">
+                      Sections could not be loaded. Close this list and try again.
+                    </div>
+                  )}
+
                   {/* Individual sections */}
-                  {course.sections.map((section) => {
+                  {(course.sections || []).map((section) => {
                     const isAlreadySelected = requiredCRNs.includes(section.crn);
                     return (
                       <button
@@ -426,7 +471,7 @@ export function CourseSelector() {
             const course = courses.find((c) => c.course_key === courseKey);
             // Get CRNs that belong to this course
             const courseCRNs = course?.sections
-              .map((s) => s.crn)
+              ?.map((s) => s.crn)
               .filter((crn) => requiredCRNs.includes(crn)) || [];
 
             return (

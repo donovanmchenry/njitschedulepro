@@ -17,6 +17,7 @@ interface AppState {
   // Catalog
   courses: Course[];
   setCourses: (courses: Course[]) => void;
+  mergeCourseDetails: (courses: Course[]) => void;
 
   // Selected courses
   selectedCourseKeys: string[];
@@ -78,6 +79,19 @@ export const useAppStore = create<AppState>()(
       // Catalog
       courses: [],
       setCourses: (courses) => set({ courses }),
+      mergeCourseDetails: (detailedCourses) =>
+        set((state) => {
+          const detailedByKey = new Map(
+            detailedCourses.map((course) => [course.course_key, course])
+          );
+          return {
+            courses: state.courses.map((course) =>
+              detailedByKey.has(course.course_key)
+                ? { ...course, ...detailedByKey.get(course.course_key)! }
+                : course
+            ),
+          };
+        }),
 
       // Selected courses
       selectedCourseKeys: [],
