@@ -1,31 +1,35 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { ScheduleBuilder } from '@/components/ScheduleBuilder';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { Notice } from '@/components/Notice';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
-  const { setCourses, setIsLoading, isLoading, setSchedules } = useAppStore();
+  const { setCourses, setSchedules } = useAppStore();
+  const [catalogState, setCatalogState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
     const loadCourses = async () => {
-      setIsLoading(true);
+      setCatalogState('loading');
       try {
         const response = await fetch(apiUrl('/catalog/courses'));
+        if (!response.ok) throw new Error(`Catalog request failed: ${response.status}`);
         const data = await response.json();
         setCourses(data.courses || []);
+        setCatalogState('ready');
       } catch (error) {
         console.error('Failed to load courses:', error);
-      } finally {
-        setIsLoading(false);
+        setCatalogState('error');
       }
     };
 
     loadCourses();
-  }, [setCourses, setIsLoading]);
+  }, [setCourses]);
 
   // Load a shared schedule if ?share= is present in the URL
   useEffect(() => {
@@ -48,60 +52,37 @@ export default function Home() {
   }, [setSchedules]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
-          <ThemeToggle />
-        </div>
-        <header className="mb-4 sm:mb-8 text-center">
-          <div className="flex justify-center">
+    <main className="min-h-screen overflow-x-hidden bg-[#f4f6fb] text-gray-950 dark:bg-gray-950 dark:text-white lg:flex lg:h-screen lg:flex-col lg:overflow-hidden">
+      <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white pl-5 pr-3 dark:border-gray-700 dark:bg-gray-900">
+          <div className="flex min-w-0 items-center">
             <Image
               src="/scheduleprologo.png"
-              alt="NJIT Schedule Pro logo"
+              alt="NJIT Schedule Pro"
               width={612}
               height={408}
-              className="h-20 sm:h-32 w-auto"
+              className="h-10 w-auto shrink-0"
               priority
             />
+            <h1 className="sr-only">NJIT Schedule Pro</h1>
           </div>
-          <p className="sr-only">
-            NJIT Schedule Pro - Generate your perfect course schedule with smart
-            constraint solving
-          </p>
-        </header>
-        <div
-          className={`mb-6 mx-auto max-w-2xl transition-all duration-500 ease-in-out ${
-            isLoading ? 'opacity-100 max-h-24' : 'opacity-0 max-h-0 overflow-hidden'
-          }`}
-        >
-          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 flex items-center gap-3">
-            <svg
-              className="animate-spin h-5 w-5 text-yellow-600 dark:text-yellow-400"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            <div>
-              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                Warming up the schedule engine… this may take a few seconds
-              </p>
-            </div>
-          </div>
-        </div>
+          <ThemeToggle />
+      </header>
+
+      {catalogState !== 'ready' && (
+          <Notice
+            tone={catalogState === 'error' ? 'error' : 'info'}
+            icon={catalogState === 'loading' ? Loader2 : undefined}
+            iconClassName={catalogState === 'loading' ? 'animate-spin' : ''}
+            className="shrink-0 rounded-none border-x-0 border-t-0 pl-5 text-sm"
+          >
+            <p>
+              {catalogState === 'loading'
+                ? 'Loading the latest NJIT course catalog…'
+                : 'The course catalog could not be loaded. Check the API configuration and try again.'}
+            </p>
+          </Notice>
+      )}
+      <div className="lg:min-h-0 lg:flex-1">
         <ScheduleBuilder />
       </div>
     </main>

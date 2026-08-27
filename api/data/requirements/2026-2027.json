@@ -1,0 +1,26 @@
+{
+  "catalog_year": "2026-2027",
+  "requirements": [
+    {
+      "id": "computing_literacy_ger",
+      "label": "Computing Literacy GER",
+      "catalog_year": "2026-2027",
+      "choose": 1,
+      "course_keys": [
+        "BME 210",
+        "BNFO 135",
+        "CS 100",
+        "CS 101",
+        "CS 103",
+        "CS 104",
+        "CS 106",
+        "CS 113",
+        "CS 115",
+        "DS 100",
+        "DS 110",
+        "SDET 101"
+      ],
+      "source_url": "https://catalog.njit.edu/undergraduate/academic-policies-procedures/general-education-requirements/computer-science-ger/"
+    }
+  ]
+}

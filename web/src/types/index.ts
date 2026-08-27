@@ -41,12 +41,14 @@ export interface AvailabilityBlock {
 export interface ScheduleFilters {
   status?: Status[];
   delivery?: DeliveryMode[];
+  preferred_delivery?: DeliveryMode[];
   campus_include?: string[];
   campus_exclude?: string[];
   avoid_instructors?: string[];
   prefer_instructors?: string[];
   earliest_start?: number;
   latest_end?: number;
+  preferred_time?: TimePreference;
   max_gap_min?: number;
   include_honors?: boolean;
   include_non_honors?: boolean;
@@ -54,6 +56,7 @@ export interface ScheduleFilters {
 
 export interface SolveRequest {
   required_course_keys: string[];
+  course_choice_groups?: CourseChoiceGroup[];
   optional_course_keys?: string[];
   required_crns?: string[];
   preferred_professors?: Record<string, string[]>;
@@ -62,6 +65,63 @@ export interface SolveRequest {
   unavailable: AvailabilityBlock[];
   filters?: ScheduleFilters;
   max_results?: number;
+}
+
+export type TimePreference = 'morning' | 'afternoon' | 'evening';
+export type ConstraintStrength = 'required' | 'preferred';
+
+export interface CourseChoiceGroup {
+  id: string;
+  label: string;
+  eligible_course_keys: string[];
+  choose: number;
+  total_course_count: number;
+  open_course_count: number;
+  departments?: string[];
+  minimum_level?: number | null;
+  requirement_id?: string | null;
+  source_text?: string | null;
+}
+
+export interface IntentIssue {
+  code: string;
+  severity: 'warning' | 'blocking';
+  message: string;
+  source_text?: string | null;
+}
+
+export interface ParsedScheduleConstraints {
+  schema_version: '1.0';
+  courses: string[];
+  excluded_courses: string[];
+  course_groups: CourseChoiceGroup[];
+  unavailable_blocks: AvailabilityBlock[];
+  min_credits?: number | null;
+  max_credits?: number | null;
+  time_preference?: TimePreference | null;
+  time_preference_strength?: ConstraintStrength | null;
+  delivery_preference?: DeliveryMode | null;
+  delivery_preference_strength?: ConstraintStrength | null;
+  unresolved_requests: string[];
+  issues: IntentIssue[];
+}
+
+export interface AIParseResult {
+  success: boolean;
+  constraints: ParsedScheduleConstraints;
+  confidence: 'high' | 'medium' | 'low';
+  usage?: {
+    daily_count: number;
+    daily_remaining: number;
+    total_count: number;
+    total_remaining: number;
+  };
+  meta?: {
+    model: string;
+    duration_ms: number;
+    input_tokens: number;
+    output_tokens: number;
+  };
 }
 
 export interface Schedule {
@@ -85,11 +145,18 @@ export interface Course {
 
 // Helper functions
 export function minutesToTime(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
+  const normalizedMinutes = ((minutes % 1440) + 1440) % 1440;
+  const hours = Math.floor(normalizedMinutes / 60);
+  const mins = normalizedMinutes % 60;
   const period = hours >= 12 ? 'PM' : 'AM';
   const displayHours = hours % 12 || 12;
   return `${displayHours}:${mins.toString().padStart(2, '0')} ${period}`;
+}
+
+export function formatAvailabilityRange(startMin: number, endMin: number): string {
+  if (startMin === 0 && endMin === 1440) return 'All day';
+  const endLabel = endMin === 1440 ? 'End of day' : minutesToTime(endMin);
+  return `${minutesToTime(startMin)} – ${endLabel}`;
 }
 
 export function timeToMinutes(timeStr: string): number {
@@ -106,7 +173,7 @@ export function timeToMinutes(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export const DAYS: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+export const DAYS: DayOfWeek[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export const DAY_NAMES: Record<DayOfWeek, string> = {
   Mon: 'Monday',

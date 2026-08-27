@@ -49,10 +49,62 @@
   }
 }
 
+@layer utilities {
+  .workspace-scrollbar {
+    scrollbar-color: rgb(203 213 225) transparent;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+  }
+
+  .workspace-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .workspace-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .workspace-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225);
+    border-radius: 999px;
+  }
+
+  .workspace-scrollbar-left {
+    direction: rtl;
+  }
+
+  .workspace-scrollbar-left > * {
+    direction: ltr;
+  }
+
+  .dark .workspace-scrollbar {
+    scrollbar-color: rgb(71 85 105) transparent;
+  }
+
+  .dark .workspace-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(71 85 105);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
   }
+
+  :where(button, a, input, textarea, select):focus {
+    outline: none;
+  }
+
+  :where(button, a, input, textarea, select):focus-visible {
+    outline: 2px solid rgb(100 116 139);
+    outline-offset: 2px;
+  }
+
+  .dark :where(button, a, input, textarea, select):focus-visible {
+    outline-color: rgb(148 163 184);
+  }
+
   body {
     @apply bg-background text-foreground;
   }

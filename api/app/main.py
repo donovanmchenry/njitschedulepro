@@ -1,31 +1,43 @@
 """FastAPI main application."""
 
+import base64
+import binascii
+import csv
 import glob
+import io
+import logging
 import os
 import re
 import time as _time
-import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
-
 import httpx
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from pydantic import BaseModel
 
 from app.ai_parser import AIParseRequest, parse_natural_language
 from app.ics_export import generate_ics
 from app.models import Offering, Schedule, SolveRequest, SolveResponse
 from app.normalizer import normalize_csv, normalize_multiple_csvs
-from app.rate_limiter import check_rate_limit, get_global_stats, get_usage_stats, increment_usage
 from app.rmp import batch_fetch_ratings
+from app.shared_rate_limiter import (
+    RateLimitExceededError,
+    RateLimitUnavailableError,
+    acquire_ai_request,
+    acquire_solve_request,
+    get_global_stats,
+    get_rate_limiter_health,
+    get_usage_stats,
+    record_ai_tokens,
+)
 from app.solver import solve_schedules
+
+load_dotenv()
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="NJIT Schedule Pro API",
@@ -41,9 +53,7 @@ default_origins = [
 allowed_origins_env = os.getenv("ALLOWED_ORIGINS")
 if allowed_origins_env:
     allowed_origins = [
-        origin.strip().rstrip("/")
-        for origin in allowed_origins_env.split(",")
-        if origin.strip()
+        origin.strip().rstrip("/") for origin in allowed_origins_env.split(",") if origin.strip()
     ]
     # Always include local development defaults
     allowed_origins.extend(default_origins)
@@ -62,31 +72,8 @@ app.add_middleware(
 catalog: List[Offering] = []
 catalog_metadata: Dict = {}
 
-# Shared schedules: id → serialized Schedule dict
-_shared_schedules: Dict[str, dict] = {}
-
 # Prerequisites cache: normalized course_key → prereq text or None
 _prereqs_cache: Dict[str, Optional[str]] = {}
-
-# Solve endpoint rate limiting (separate from AI rate limiter)
-# Note: request.client.host is the proxy IP when behind a reverse proxy (e.g. Render).
-_solve_rate_limit: Dict[str, List[float]] = {}
-SOLVE_RATE_LIMIT = 30  # requests per minute per IP
-SOLVE_RATE_WINDOW = 60  # seconds
-
-
-def _check_solve_rate_limit(ip: str) -> bool:
-    """Returns True if the request should be allowed."""
-    now = _time.time()
-    window_start = now - SOLVE_RATE_WINDOW
-    timestamps = [t for t in _solve_rate_limit.get(ip, []) if t > window_start]
-    if len(timestamps) >= SOLVE_RATE_LIMIT:
-        _solve_rate_limit[ip] = timestamps
-        return False
-    timestamps.append(now)
-    _solve_rate_limit[ip] = timestamps
-    return True
-
 
 class RatingsRequest(BaseModel):
     names: List[str]
@@ -135,12 +122,14 @@ async def startup_event():
 @app.get("/")
 async def root():
     """Health check endpoint."""
+    limiter_health = await get_rate_limiter_health()
     return {
         "status": "healthy",
         "service": "NJIT Schedule Pro API",
         "version": "1.0.0",
         "catalog_loaded": len(catalog) > 0,
         "catalog_size": len(catalog),
+        "rate_limiting": limiter_health,
     }
 
 
@@ -338,14 +327,26 @@ async def solve(request_body: SolveRequest, request: Request):
         List of valid schedules
     """
     client_ip = request.client.host if request.client else "unknown"
-    if not _check_solve_rate_limit(client_ip):
+    try:
+        await acquire_solve_request(client_ip)
+    except RateLimitExceededError as exc:
+        headers = (
+            {"Retry-After": str(exc.retry_after_seconds)}
+            if exc.retry_after_seconds is not None
+            else None
+        )
         raise HTTPException(
             status_code=429,
-            detail="Too many schedule requests. Limit is 30 per minute. Please wait and try again.",
+            detail=str(exc),
+            headers=headers,
         )
+    except RateLimitUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
     if not catalog:
-        raise HTTPException(status_code=400, detail="Catalog is empty. Please ingest CSV files first.")
+        raise HTTPException(
+            status_code=400, detail="Catalog is empty. Please ingest CSV files first."
+        )
 
     # Validate required courses exist
     catalog_course_keys = {o.course_key for o in catalog}
@@ -353,6 +354,28 @@ async def solve(request_body: SolveRequest, request: Request):
     if missing:
         raise HTTPException(
             status_code=400, detail=f"Required courses not found in catalog: {', '.join(missing)}"
+        )
+
+    missing_group_courses = {
+        course_key
+        for group in request_body.course_choice_groups
+        for course_key in group.eligible_course_keys
+        if course_key not in catalog_course_keys
+    }
+    if missing_group_courses:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Requirement courses not found in catalog: "
+                + ", ".join(sorted(missing_group_courses))
+            ),
+        )
+
+    catalog_crns = {o.crn for o in catalog}
+    missing_crns = [crn for crn in request_body.required_crns if crn not in catalog_crns]
+    if missing_crns:
+        raise HTTPException(
+            status_code=400, detail=f"Required CRNs not found in catalog: {', '.join(missing_crns)}"
         )
 
     # Solve
@@ -375,7 +398,7 @@ async def ai_parse_schedule(parse_request: AIParseRequest, request: Request):
     Parse natural language schedule description into structured constraints using AI.
 
     Args:
-        parse_request: Contains user prompt and optional API key
+        parse_request: Contains the student's schedule description
         request: FastAPI request object (for IP address)
 
     Returns:
@@ -384,39 +407,64 @@ async def ai_parse_schedule(parse_request: AIParseRequest, request: Request):
     # Get client IP
     client_ip = request.client.host if request.client else "unknown"
 
-    # Check if user is providing their own API key
-    use_user_key = parse_request.user_api_key is not None
+    try:
+        usage_stats = await acquire_ai_request(client_ip)
+    except RateLimitExceededError as exc:
+        headers = (
+            {"Retry-After": str(exc.retry_after_seconds)}
+            if exc.retry_after_seconds is not None
+            else None
+        )
+        raise HTTPException(status_code=429, detail=str(exc), headers=headers)
+    except RateLimitUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
-    # Check rate limits (skip if using own key)
-    allowed, error_msg = check_rate_limit(client_ip, use_user_key)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=error_msg)
-
+    started = _time.perf_counter()
     try:
         # Parse using AI
-        result = await parse_natural_language(
-            parse_request.prompt, parse_request.user_api_key
+        result = await parse_natural_language(parse_request.prompt, catalog)
+
+        try:
+            await record_ai_tokens(result.input_tokens or 0, result.output_tokens or 0)
+        except RateLimitUnavailableError:
+            logger.warning("ai_schedule_parse telemetry_unavailable")
+        duration_ms = round((_time.perf_counter() - started) * 1000)
+        blocking_issue_count = sum(
+            issue.severity.value == "blocking" for issue in result.constraints.issues
         )
-
-        # Increment usage counter
-        increment_usage(client_ip, use_user_key)
-
-        # Get updated usage stats
-        usage_stats = get_usage_stats(client_ip)
+        logger.info(
+            "ai_schedule_parse success duration_ms=%s confidence=%s "
+            "blocking_issues=%s course_groups=%s input_tokens=%s output_tokens=%s",
+            duration_ms,
+            result.confidence,
+            blocking_issue_count,
+            len(result.constraints.course_groups),
+            result.input_tokens,
+            result.output_tokens,
+        )
 
         return {
             "success": True,
             "constraints": result.constraints.model_dump(),
             "confidence": result.confidence,
             "usage": usage_stats,
+            "meta": {
+                "model": result.model,
+                "duration_ms": duration_ms,
+                "input_tokens": result.input_tokens,
+                "output_tokens": result.output_tokens,
+            },
         }
 
-    except ValueError as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except RuntimeError as exc:
+        logger.warning("ai_schedule_parse unavailable error=%s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail=str(exc))
+    except ValueError as exc:
+        logger.warning("ai_schedule_parse invalid error=%s", type(exc).__name__)
+        raise HTTPException(status_code=502, detail=str(exc))
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error parsing schedule: {str(e)}"
-        )
+        logger.exception("ai_schedule_parse failed")
+        raise HTTPException(status_code=500, detail="Could not interpret that description") from e
 
 
 @app.get("/ai/usage")
@@ -431,7 +479,10 @@ async def get_ai_usage(request: Request):
         Usage statistics
     """
     client_ip = request.client.host if request.client else "unknown"
-    return get_usage_stats(client_ip)
+    try:
+        return await get_usage_stats(client_ip)
+    except RateLimitUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
 
 @app.get("/ai/global-stats")
@@ -442,7 +493,10 @@ async def get_ai_global_stats():
     Returns:
         Global usage statistics
     """
-    return get_global_stats()
+    try:
+        return await get_global_stats()
+    except RateLimitUnavailableError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
 
 @app.post("/export/ics")
@@ -497,9 +551,27 @@ async def export_csv(schedule: Schedule):
     Returns:
         CSV file download
     """
-    import csv
-    import io
+    csv_content = _schedule_to_csv(schedule)
+    return Response(
+        content=csv_content.encode("utf-8"),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=njit_schedule.csv"},
+    )
 
+
+DAY_TO_CSV_CODE = {
+    "Mon": "M",
+    "Tue": "T",
+    "Wed": "W",
+    "Thu": "R",
+    "Fri": "F",
+    "Sat": "S",
+    "Sun": "U",
+}
+
+
+def _schedule_to_csv(schedule: Schedule) -> str:
+    """Serialize every meeting without losing day, time, or location details."""
     output = io.StringIO()
     writer = csv.writer(output)
 
@@ -520,43 +592,33 @@ async def export_csv(schedule: Schedule):
         ]
     )
 
-    # Rows
     for offering in schedule.offerings:
-        # Format days and times
-        if offering.meetings:
-            days_str = "".join(sorted(set(m.day.value[0] for m in offering.meetings)))
-            first_meeting = offering.meetings[0]
-            times_str = f"{_minutes_to_ampm(first_meeting.start_min)} - {_minutes_to_ampm(first_meeting.end_min)}"
-            location = first_meeting.location or ""
-        else:
-            days_str = "TBA"
-            times_str = "TBA"
-            location = ""
-
-        writer.writerow(
-            [
-                offering.course_key,
-                offering.title,
-                offering.crn,
-                offering.section,
-                days_str,
-                times_str,
-                location,
-                offering.instructor or "",
-                offering.delivery.value,
-                offering.credits or "",
-                offering.status.value,
-            ]
-        )
+        meetings = offering.meetings or [None]
+        for meeting in meetings:
+            writer.writerow(
+                [
+                    offering.course_key,
+                    offering.title,
+                    offering.crn,
+                    offering.section,
+                    DAY_TO_CSV_CODE[meeting.day.value] if meeting else "TBA",
+                    (
+                        f"{_minutes_to_ampm(meeting.start_min)} - "
+                        f"{_minutes_to_ampm(meeting.end_min)}"
+                        if meeting
+                        else "TBA"
+                    ),
+                    meeting.location or "" if meeting else "",
+                    offering.instructor or "",
+                    offering.delivery.value,
+                    offering.credits or "",
+                    offering.status.value,
+                ]
+            )
 
     csv_content = output.getvalue()
     output.close()
-
-    return Response(
-        content=csv_content.encode("utf-8"),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=njit_schedule.csv"},
-    )
+    return csv_content
 
 
 @app.post("/professors/ratings")
@@ -623,18 +685,40 @@ async def get_prerequisites(course_key: str):
 @app.post("/share")
 async def create_share(schedule: Schedule):
     """
-    Save a schedule and return a short ID that can be used to retrieve it.
-    The schedule is kept in memory; links expire when the server restarts.
+    Return a compact token containing the schedule's public CRNs.
+
+    Tokens survive API restarts because the current catalog is authoritative.
     """
-    share_id = uuid.uuid4().hex[:8]
-    _shared_schedules[share_id] = schedule.model_dump()
+    crns = ",".join(sorted({offering.crn for offering in schedule.offerings}))
+    if not crns:
+        raise HTTPException(status_code=400, detail="Cannot share an empty schedule")
+    share_id = base64.urlsafe_b64encode(crns.encode("utf-8")).decode("ascii").rstrip("=")
     return {"id": share_id}
 
 
 @app.get("/share/{share_id}")
 async def get_share(share_id: str):
-    """Retrieve a previously shared schedule by its short ID."""
-    data = _shared_schedules.get(share_id)
-    if not data:
+    """Rebuild a shared schedule from a URL-safe CRN token."""
+    if len(share_id) > 512 or not re.fullmatch(r"[A-Za-z0-9_-]+", share_id):
         raise HTTPException(status_code=404, detail="Share link not found or expired")
-    return data
+
+    try:
+        padding = "=" * (-len(share_id) % 4)
+        decoded = base64.urlsafe_b64decode(f"{share_id}{padding}").decode("utf-8")
+        requested_crns = [crn for crn in decoded.split(",") if crn]
+    except (ValueError, UnicodeDecodeError, binascii.Error):
+        raise HTTPException(status_code=404, detail="Share link not found or expired")
+
+    if not requested_crns or any(not re.fullmatch(r"[A-Za-z0-9-]+", crn) for crn in requested_crns):
+        raise HTTPException(status_code=404, detail="Share link not found or expired")
+
+    offerings_by_crn = {offering.crn: offering for offering in catalog}
+    if any(crn not in offerings_by_crn for crn in requested_crns):
+        raise HTTPException(status_code=404, detail="Share link not found or expired")
+
+    offerings = [offerings_by_crn[crn] for crn in requested_crns]
+    return Schedule(
+        offerings=offerings,
+        total_credits=sum(offering.credits or 0 for offering in offerings),
+        score=0,
+    )

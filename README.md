@@ -5,6 +5,7 @@ A production-ready course schedule generator for NJIT students that uses advance
 ## Features
 
 - **Smart Schedule Generation**: Advanced backtracking solver generates all feasible schedules
+- **Natural-Language Planning**: Turn a plain-English description into reviewed schedule constraints
 - **Flexible Constraints**: Set unavailable time blocks, credit limits, and preferences
 - **Strict Availability Enforcement**: Ensures no conflicts with unavailable time blocks
 - **Rich Filtering**: Filter by course status, delivery mode, instructors, campus, honors classes, and more
@@ -18,6 +19,7 @@ A production-ready course schedule generator for NJIT students that uses advance
 ### Backend (FastAPI + Python)
 - **Data Normalization**: Robust CSV parsing with support for various NJIT formats
 - **Constraint Solver**: Backtracking algorithm with intelligent pruning
+- **AI Intent Pipeline**: Strict model output, deterministic catalog resolution, and a review gate
 - **RESTful API**: Clean API endpoints for catalog, solving, and export
 - **Type Safety**: Full pydantic models for validation
 
@@ -144,8 +146,12 @@ The application expects CSV files with the following columns:
 
 ### 1. Select Courses
 - Use the search box to find courses by code (e.g., "CS 100") or title
+- Search requirements such as "CS/IS/IT/DS elective 300 or above"
 - Click to add courses to your required list
 - Remove courses by clicking the X button
+
+You can also describe the schedule in plain language, check the interpreted courses,
+requirements, unavailable times, and preferences, then apply it to the same controls.
 
 ### 2. Set Availability Constraints
 - Select days and times when you are **unavailable**
@@ -192,8 +198,14 @@ Get unique courses with section counts
 
 ### `POST /solve`
 Generate schedules based on constraints
-- **Body**: `SolveRequest` JSON
+- **Body**: `SolveRequest` JSON, including exact courses and optional course choice groups
 - **Returns**: `SolveResponse` with schedules
+
+### `POST /ai/parse-schedule`
+Interpret a plain-language request into versioned, catalog-resolved constraints
+- **Body**: `{ "prompt": "..." }`
+- **Returns**: Reviewed intent, issues, confidence, rate-limit usage, and model telemetry
+- **Design**: See [`docs/ai-scheduling.md`](docs/ai-scheduling.md)
 
 ### `POST /export/ics`
 Export schedule as ICS calendar file
@@ -234,12 +246,15 @@ Schedules are scored (lower is better) based on:
 njitschedulepro/
 ├── api/                      # FastAPI backend
 │   ├── app/
+│   │   ├── ai_parser.py     # Strict AI intent extraction
+│   │   ├── intent.py        # Requirement resolution and conflict checks
 │   │   ├── main.py          # FastAPI app and endpoints
 │   │   ├── models.py        # Pydantic data models
 │   │   ├── normalizer.py    # CSV parsing and normalization
 │   │   ├── solver.py        # Constraint solver
 │   │   └── ics_export.py    # ICS calendar generation
 │   ├── tests/               # Unit tests
+│   ├── evals/               # Adversarial AI cases and latest results
 │   ├── pyproject.toml       # Python dependencies
 │   └── Dockerfile
 ├── web/                      # Next.js frontend
@@ -265,7 +280,7 @@ poetry run pytest
 poetry run pytest --cov=app --cov-report=html
 ```
 
-### Frontend Tests (if implemented)
+### Frontend Tests
 ```bash
 cd web
 pnpm test
@@ -287,9 +302,14 @@ docker compose up -d
 
 #### API
 - `PYTHONUNBUFFERED=1` - Enable Python output buffering
+- `ANTHROPIC_API_KEY` - Server-side key used by the AI schedule assistant
+- `ANTHROPIC_MODEL` - Optional model override (defaults to `claude-haiku-4-5-20251001`)
+- `REDIS_URL` - Redis/Valkey connection used for atomic shared rate limits in production
+- `AI_*_LIMIT_*` - Optional quota overrides; see `.env.example` for defaults
 
 #### Web
-- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:8000)
+- `NEXT_PUBLIC_API_BASE_URL` - Optional public API URL used by the browser
+- `API_PROXY_TARGET` - Server-side API target for the `/api` proxy (defaults to `http://localhost:8000`)
 
 ## Troubleshooting
 

@@ -2,18 +2,35 @@ services:
   # Backend API
   - type: web
     name: njit-schedule-pro-api
-    env: python
+    runtime: python
     region: oregon
     plan: free
-    buildCommand: "cd api && pip install poetry && poetry install"
+    buildCommand: "cd api && pip install poetry && poetry install --only main"
     startCommand: "cd api && poetry run uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: njit-schedule-pro-rate-limits
+          property: connectionString
     autoDeploy: true
     healthCheckPath: /
+
+  - type: keyvalue
+    name: njit-schedule-pro-rate-limits
+    region: oregon
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+    persistenceMode: off
 
   # Frontend (optional - if hosting on Render instead of Vercel)
   # - type: web
@@ -26,6 +43,6 @@ services:
   #   envVars:
   #     - key: NODE_VERSION
   #       value: 18
-  #     - key: NEXT_PUBLIC_API_URL
+    #     - key: NEXT_PUBLIC_API_BASE_URL
   #       sync: false  # Set this in Render dashboard to your API URL
   #   autoDeploy: true

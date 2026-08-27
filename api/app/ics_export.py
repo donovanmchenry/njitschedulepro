@@ -7,7 +7,6 @@ from icalendar import Calendar, Event
 
 from app.models import DayOfWeek, Schedule
 
-
 # Mapping for days to ISO weekday (Monday=0, Sunday=6)
 DAY_TO_ISO_WEEKDAY: Dict[DayOfWeek, int] = {
     DayOfWeek.MONDAY: 0,

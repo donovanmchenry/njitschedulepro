@@ -1,9 +1,9 @@
 """Data models for NJIT Schedule Pro."""
 
 from enum import Enum
-from typing import List, Optional
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class DayOfWeek(str, Enum):
@@ -75,7 +75,9 @@ class Offering(BaseModel):
     section: str = Field(..., description="Section identifier")
     title: str
     term: Optional[str] = None
-    meetings: List[Meeting] = Field(default_factory=list, description="All meetings for this section")
+    meetings: List[Meeting] = Field(
+        default_factory=list, description="All meetings for this section"
+    )
     status: Status = Status.OPEN
     capacity: Optional[int] = None
     enrolled: Optional[int] = None
@@ -95,7 +97,7 @@ class Offering(BaseModel):
     @property
     def is_honors(self) -> bool:
         """Check if this is an honors section (section starts with H)."""
-        return self.section.upper().startswith('H')
+        return self.section.upper().startswith("H")
 
     def overlaps_with(self, other: "Offering") -> bool:
         """Check if any meeting in this offering overlaps with another offering."""
@@ -119,29 +121,44 @@ class ScheduleFilters(BaseModel):
 
     status: List[Status] = Field(default_factory=lambda: [Status.OPEN])
     delivery: Optional[List[DeliveryMode]] = None
+    preferred_delivery: Optional[List[DeliveryMode]] = None
     campus_include: Optional[List[str]] = None
     campus_exclude: Optional[List[str]] = None
     avoid_instructors: Optional[List[str]] = None
     prefer_instructors: Optional[List[str]] = None
     earliest_start: Optional[int] = Field(None, ge=0, lt=1440)
     latest_end: Optional[int] = Field(None, ge=0, le=1440)
+    preferred_time: Optional[Literal["morning", "afternoon", "evening"]] = None
     max_gap_min: Optional[int] = Field(None, ge=0)
     include_honors: bool = Field(default=True, description="Include honors sections")
     include_non_honors: bool = Field(default=True, description="Include non-honors sections")
 
 
+class CourseChoiceGroup(BaseModel):
+    """Choose a fixed number of distinct courses from an eligible set."""
+
+    id: str
+    eligible_course_keys: List[str] = Field(min_length=1)
+    choose: int = Field(..., ge=1, le=8)
+
+    @model_validator(mode="after")
+    def enough_candidates(self) -> "CourseChoiceGroup":
+        if len(set(self.eligible_course_keys)) < self.choose:
+            raise ValueError("A course choice group needs at least 'choose' distinct courses")
+        return self
+
+
 class SolveRequest(BaseModel):
     """Request to generate schedules."""
 
-    required_course_keys: List[str] = Field(..., min_length=1)
+    required_course_keys: List[str] = Field(default_factory=list)
+    course_choice_groups: List[CourseChoiceGroup] = Field(default_factory=list)
     optional_course_keys: Optional[List[str]] = None
     required_crns: List[str] = Field(
-        default_factory=list,
-        description="Specific CRNs that must be included in the schedule"
+        default_factory=list, description="Specific CRNs that must be included in the schedule"
     )
     preferred_professors: dict[str, List[str]] = Field(
-        default_factory=dict,
-        description="Map of course_key to list of preferred professor names"
+        default_factory=dict, description="Map of course_key to list of preferred professor names"
     )
     min_credits: Optional[float] = None
     max_credits: Optional[float] = None
@@ -149,15 +166,20 @@ class SolveRequest(BaseModel):
     filters: ScheduleFilters = Field(default_factory=ScheduleFilters)
     max_results: int = Field(default=500, ge=1, le=2000)
 
+    @model_validator(mode="after")
+    def require_course_or_crn(self) -> "SolveRequest":
+        """Require at least one course-level or section-level selection."""
+        if not self.required_course_keys and not self.required_crns and not self.course_choice_groups:
+            raise ValueError("Select at least one course, requirement, or CRN")
+        return self
+
 
 class Schedule(BaseModel):
     """A generated schedule with offerings and metadata."""
 
     offerings: List[Offering]
     total_credits: float
-    score: float = Field(
-        ..., description="Lower is better; primary: gaps, instructor prefs, etc."
-    )
+    score: float = Field(..., description="Lower is better; primary: gaps, instructor prefs, etc.")
 
     def __hash__(self):
         """Hash by sorted CRNs for deduplication."""

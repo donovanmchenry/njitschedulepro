@@ -32,7 +32,7 @@ from app.ai_parser import AIParseRequest, parse_natural_language
 from app.ics_export import generate_ics
 from app.models import Offering, Schedule, SolveRequest, SolveResponse
 from app.normalizer import normalize_csv, normalize_multiple_csvs
-from app.rate_limiter import check_rate_limit, get_global_stats, get_usage_stats, increment_usage
+from app.shared_rate_limiter import acquire_ai_request, acquire_solve_request
 from app.solver import solve_schedules
 from app.admin_endpoints import router as admin_router  # <-- ADD THIS
 ```
@@ -59,7 +59,7 @@ catalog: List[Offering] = []
 ### Step 3: Restart Your API
 
 ```bash
-cd /Users/donovanmchenry/Projects/njitschedulepro/api
+cd api
 uvicorn app.main:app --reload
 ```
 

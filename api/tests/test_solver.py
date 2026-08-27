@@ -4,6 +4,7 @@ import pytest
 
 from app.models import (
     AvailabilityBlock,
+    CourseChoiceGroup,
     DayOfWeek,
     Meeting,
     Offering,
@@ -29,7 +30,9 @@ class TestScheduleSolver:
                 title="Intro to CS",
                 meetings=[
                     Meeting(day=DayOfWeek.MONDAY, start_min=600, end_min=680, location="CKB 101"),
-                    Meeting(day=DayOfWeek.WEDNESDAY, start_min=600, end_min=680, location="CKB 101"),
+                    Meeting(
+                        day=DayOfWeek.WEDNESDAY, start_min=600, end_min=680, location="CKB 101"
+                    ),
                 ],
                 status=Status.OPEN,
                 capacity=40,
@@ -59,7 +62,9 @@ class TestScheduleSolver:
                 title="Calculus I",
                 meetings=[
                     Meeting(day=DayOfWeek.MONDAY, start_min=540, end_min=590, location="TIER 201"),
-                    Meeting(day=DayOfWeek.WEDNESDAY, start_min=540, end_min=590, location="TIER 201"),
+                    Meeting(
+                        day=DayOfWeek.WEDNESDAY, start_min=540, end_min=590, location="TIER 201"
+                    ),
                     Meeting(day=DayOfWeek.FRIDAY, start_min=540, end_min=590, location="TIER 201"),
                 ],
                 status=Status.OPEN,
@@ -75,7 +80,9 @@ class TestScheduleSolver:
                 title="Calculus I",
                 meetings=[
                     Meeting(day=DayOfWeek.TUESDAY, start_min=660, end_min=735, location="TIER 202"),
-                    Meeting(day=DayOfWeek.THURSDAY, start_min=660, end_min=735, location="TIER 202"),
+                    Meeting(
+                        day=DayOfWeek.THURSDAY, start_min=660, end_min=735, location="TIER 202"
+                    ),
                 ],
                 status=Status.OPEN,
                 capacity=50,
@@ -142,29 +149,41 @@ class TestScheduleSolver:
             crns = {o.crn for o in schedule.offerings}
             assert "11001" not in crns
 
-    def test_near_miss_tolerance(self, sample_offerings):
-        """Test near-miss tolerance for slight constraint violations."""
-        # Block Monday 10:00-11:00, but allow 30 min tolerance
+    def test_availability_is_strict(self, sample_offerings):
+        """Availability blocks never allow a partial overlap."""
         request = SolveRequest(
             required_course_keys=["CS 100"],
             unavailable=[
                 AvailabilityBlock(day=DayOfWeek.MONDAY, start_min=600, end_min=660),
             ],
-            near_miss_tolerance_min=30,
-            weekly_violation_cap_min=60,
+        )
+
+        schedules = solve_schedules(sample_offerings, request)
+        assert {schedule.offerings[0].crn for schedule in schedules} == {"11002"}
+
+    def test_crn_only_schedule(self, sample_offerings):
+        """A pinned CRN can generate a schedule without a course-level selection."""
+        request = SolveRequest(required_crns=["11001"], unavailable=[])
+
+        schedules = solve_schedules(sample_offerings, request)
+
+        assert len(schedules) == 1
+        assert [offering.crn for offering in schedules[0].offerings] == ["11001"]
+
+    def test_max_gap_is_a_hard_constraint(self, sample_offerings):
+        """Schedules with a break over the selected limit are excluded."""
+        request = SolveRequest(
+            required_course_keys=["CS 100", "MATH 111"],
+            unavailable=[],
+            filters=ScheduleFilters(max_gap_min=0),
         )
 
         schedules = solve_schedules(sample_offerings, request)
 
-        # Should find schedules including near-misses
-        assert len(schedules) > 0
-
-        # Some may have violations
-        near_misses = [s for s in schedules if s.is_near_miss]
-        if near_misses:
-            for schedule in near_misses:
-                assert schedule.total_violation_minutes > 0
-                assert schedule.total_violation_minutes <= 60
+        assert schedules
+        for schedule in schedules:
+            crns = {offering.crn for offering in schedule.offerings}
+            assert crns != {"11001", "12001"}
 
     def test_credit_constraints(self, sample_offerings):
         """Test min/max credit constraints."""
@@ -180,6 +199,48 @@ class TestScheduleSolver:
 
         for schedule in schedules:
             assert 6.0 <= schedule.total_credits <= 8.0
+
+    def test_course_choice_group_selects_one_distinct_course(self, sample_offerings):
+        request = SolveRequest(
+            course_choice_groups=[
+                CourseChoiceGroup(
+                    id="computing-course",
+                    eligible_course_keys=["CS 100", "MATH 111"],
+                    choose=1,
+                )
+            ],
+            unavailable=[],
+        )
+
+        schedules = solve_schedules(sample_offerings, request)
+
+        assert schedules
+        assert {
+            schedule.offerings[0].course_key for schedule in schedules
+        } == {"CS 100", "MATH 111"}
+        assert all(len(schedule.offerings) == 1 for schedule in schedules)
+
+    def test_choice_groups_do_not_double_count_exact_courses(self, sample_offerings):
+        request = SolveRequest(
+            required_course_keys=["CS 100"],
+            course_choice_groups=[
+                CourseChoiceGroup(
+                    id="second-course",
+                    eligible_course_keys=["CS 100", "MATH 111"],
+                    choose=1,
+                )
+            ],
+            unavailable=[],
+        )
+
+        schedules = solve_schedules(sample_offerings, request)
+
+        assert schedules
+        assert all(
+            {offering.course_key for offering in schedule.offerings}
+            == {"CS 100", "MATH 111"}
+            for schedule in schedules
+        )
 
     def test_no_valid_schedules(self, sample_offerings):
         """Test case where no valid schedules exist."""

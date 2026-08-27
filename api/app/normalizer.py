@@ -7,7 +7,6 @@ import pandas as pd
 
 from app.models import DayOfWeek, DeliveryMode, Meeting, Offering, Status
 
-
 # Days parsing map
 DAY_MAP = {
     "M": DayOfWeek.MONDAY,
@@ -138,13 +137,15 @@ def normalize_delivery(delivery_str: str, location: str = "") -> DeliveryMode:
 
     delivery_str = delivery_str.strip().lower()
 
-    if "online" in delivery_str or "web" in delivery_str or "distance" in delivery_str:
-        return DeliveryMode.ONLINE
+    if "async" in delivery_str or "asynchronous" in delivery_str:
+        return DeliveryMode.ASYNC
     elif "hybrid" in delivery_str or "blended" in delivery_str:
         return DeliveryMode.HYBRID
-    elif "async" in delivery_str or "asynchronous" in delivery_str:
-        return DeliveryMode.ASYNC
-    elif "face-to-face" in delivery_str or "in-person" in delivery_str or "in person" in delivery_str:
+    elif "online" in delivery_str or "web" in delivery_str or "distance" in delivery_str:
+        return DeliveryMode.ONLINE
+    elif (
+        "face-to-face" in delivery_str or "in-person" in delivery_str or "in person" in delivery_str
+    ):
         return DeliveryMode.IN_PERSON
     else:
         return DeliveryMode.IN_PERSON
@@ -231,7 +232,9 @@ def normalize_csv_row(row: pd.Series) -> Optional[Offering]:
         capacity = int(max_cap) if pd.notna(max_cap) and str(max_cap).strip() else None
 
         now_enrolled = row.get("Now")
-        enrolled = int(now_enrolled) if pd.notna(now_enrolled) and str(now_enrolled).strip() else None
+        enrolled = (
+            int(now_enrolled) if pd.notna(now_enrolled) and str(now_enrolled).strip() else None
+        )
 
         credits_val = row.get("Credits")
         credits = float(credits_val) if pd.notna(credits_val) and str(credits_val).strip() else None
@@ -308,7 +311,8 @@ def deduplicate_offerings(offerings: List[Offering]) -> List[Offering]:
     for offering in offerings:
         # Create signature: CRN + meeting days/times
         meeting_sig = tuple(
-            (m.day, m.start_min, m.end_min) for m in sorted(offering.meetings, key=lambda x: (x.day.value, x.start_min))
+            (m.day, m.start_min, m.end_min)
+            for m in sorted(offering.meetings, key=lambda x: (x.day.value, x.start_min))
         )
         sig = (offering.crn, meeting_sig)
 
@@ -348,9 +352,9 @@ def merge_offerings_by_crn(offerings: List[Offering]) -> List[Offering]:
             for meeting in offering.meetings:
                 # Check if this exact meeting already exists
                 meeting_exists = any(
-                    m.day == meeting.day and
-                    m.start_min == meeting.start_min and
-                    m.end_min == meeting.end_min
+                    m.day == meeting.day
+                    and m.start_min == meeting.start_min
+                    and m.end_min == meeting.end_min
                     for m in existing.meetings
                 )
 

@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useAppStore } from '@/lib/store';
-import { AvailabilityBlock, DAYS, DAY_NAMES, DayOfWeek, minutesToTime } from '@/types';
+import { AvailabilityBlock, DAYS, DAY_NAMES, DayOfWeek, formatAvailabilityRange } from '@/types';
 import { X } from 'lucide-react';
+import { primaryButtonClass, selectedControlClass, unselectedControlClass } from '@/lib/uiStyles';
+import { Notice } from './Notice';
 
 function selectsToMinutes(hour: string, minute: string, period: 'AM' | 'PM'): number {
   let h = parseInt(hour);
@@ -28,23 +30,23 @@ function TimePicker({
   onPeriod: (v: 'AM' | 'PM') => void;
 }) {
   const selectClass =
-    'bg-transparent dark:text-white text-sm text-center appearance-none cursor-pointer focus:outline-none py-2 px-1';
+    'cursor-pointer appearance-none bg-transparent px-1 py-1.5 text-center text-xs dark:text-white';
 
   return (
-    <div className="flex-1">
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">{label}</p>
-      <div className="flex items-center divide-x divide-gray-200 dark:divide-gray-500 border border-gray-300 dark:border-gray-500 rounded-lg overflow-hidden bg-white dark:bg-gray-600">
-        <select value={hour} onChange={(e) => onHour(e.target.value)} className={`${selectClass} w-10`}>
+    <div className="min-w-0 flex-1">
+      <p className="mb-1 text-center text-[11px] font-medium text-gray-500 dark:text-gray-400">{label}</p>
+      <div className="flex items-center divide-x divide-gray-200 overflow-hidden rounded-md border border-gray-300 bg-white dark:divide-gray-600 dark:border-gray-600 dark:bg-gray-700">
+        <select value={hour} onChange={(e) => onHour(e.target.value)} className={`${selectClass} min-w-0 flex-1`}>
           {[1,2,3,4,5,6,7,8,9,10,11,12].map((h) => (
             <option key={h} value={h}>{h}</option>
           ))}
         </select>
-        <select value={minute} onChange={(e) => onMinute(e.target.value)} className={`${selectClass} w-12`}>
+        <select value={minute} onChange={(e) => onMinute(e.target.value)} className={`${selectClass} min-w-0 flex-1`}>
           {['00','15','30','45'].map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
-        <select value={period} onChange={(e) => onPeriod(e.target.value as 'AM' | 'PM')} className={`${selectClass} w-12`}>
+        <select value={period} onChange={(e) => onPeriod(e.target.value as 'AM' | 'PM')} className={`${selectClass} min-w-0 flex-1`}>
           <option>AM</option>
           <option>PM</option>
         </select>
@@ -63,31 +65,33 @@ export function AvailabilityEditor() {
   const [endHour, setEndHour] = useState('5');
   const [endMinute, setEndMinute] = useState('00');
   const [endPeriod, setEndPeriod] = useState<'AM' | 'PM'>('PM');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleAddBlock = () => {
     const start_min = selectsToMinutes(startHour, startMinute, startPeriod);
     const end_min = selectsToMinutes(endHour, endMinute, endPeriod);
     if (end_min <= start_min) {
-      alert('End time must be after start time');
+      setValidationError('End time must be after start time.');
       return;
     }
+    setValidationError(null);
     addUnavailableBlock({ day: selectedDay, start_min, end_min });
   };
 
   return (
-    <div className="space-y-4">
-      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
+    <div className="space-y-2">
+      <div className="space-y-2 rounded-md border border-gray-200 bg-gray-50 p-2 dark:border-gray-700 dark:bg-gray-800">
 
         {/* Day pill buttons */}
-        <div className="flex gap-1.5">
+        <div className="flex gap-1">
           {DAYS.map((day) => (
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold touch-manipulation transition-colors ${
+              className={`flex-1 rounded-md border py-1.5 text-xs font-semibold touch-manipulation transition-colors ${
                 selectedDay === day
-                  ? 'bg-njit-red text-white shadow-sm'
-                  : 'bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-500'
+                  ? selectedControlClass
+                  : unselectedControlClass
               }`}
             >
               {DAY_LABELS[day]}
@@ -96,13 +100,13 @@ export function AvailabilityEditor() {
         </div>
 
         {/* From → To */}
-        <div className="flex items-end gap-2">
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-end">
           <TimePicker
             label="From"
             hour={startHour} minute={startMinute} period={startPeriod}
             onHour={setStartHour} onMinute={setStartMinute} onPeriod={setStartPeriod}
           />
-          <span className="text-gray-400 dark:text-gray-400 pb-2.5 text-base">→</span>
+          <span className="hidden pb-1.5 text-sm text-gray-400 sm:block">→</span>
           <TimePicker
             label="To"
             hour={endHour} minute={endMinute} period={endPeriod}
@@ -112,30 +116,34 @@ export function AvailabilityEditor() {
 
         <button
           onClick={handleAddBlock}
-          className="w-full bg-njit-red hover:bg-red-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-colors shadow-md touch-manipulation"
+          className={`w-full px-3 py-2 text-xs touch-manipulation ${primaryButtonClass}`}
         >
-          Add Unavailable Time
+          Add time to avoid
         </button>
       </div>
 
+      {validationError && <Notice tone="error" className="text-xs">{validationError}</Notice>}
+
       {/* Existing blocks */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         {unavailableBlocks.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 italic">No constraints set</p>
+          <p className="text-xs italic text-gray-500 dark:text-gray-400">No times added</p>
         ) : (
           unavailableBlocks.map((block, index) => (
             <div
               key={index}
-              className="flex items-center justify-between bg-red-100 dark:bg-red-900/40 px-3 py-2 rounded-lg border border-red-200 dark:border-red-700"
+              className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-800"
             >
-              <div className="text-sm dark:text-red-100">
+              <div className="text-xs text-gray-700 dark:text-gray-300">
                 <span className="font-semibold">{DAY_NAMES[block.day]}</span>
                 <span className="mx-2">•</span>
-                <span>{minutesToTime(block.start_min)} – {minutesToTime(block.end_min)}</span>
+                <span>{formatAvailabilityRange(block.start_min, block.end_min)}</span>
               </div>
               <button
+                type="button"
                 onClick={() => removeUnavailableBlock(index)}
-                className="text-red-700 hover:text-red-900 dark:text-red-300 dark:hover:text-red-200 p-1"
+                className="rounded p-1 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+                aria-label={`Remove unavailable time on ${DAY_NAMES[block.day]}`}
               >
                 <X size={16} />
               </button>

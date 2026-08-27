@@ -7,6 +7,7 @@ import { persist } from 'zustand/middleware';
 import {
   AvailabilityBlock,
   Course,
+  CourseChoiceGroup,
   Schedule,
   ScheduleFilters,
   Status,
@@ -21,6 +22,11 @@ interface AppState {
   selectedCourseKeys: string[];
   addCourse: (courseKey: string) => void;
   removeCourse: (courseKey: string) => void;
+
+  // Course requirement groups
+  courseChoiceGroups: CourseChoiceGroup[];
+  addCourseChoiceGroup: (group: CourseChoiceGroup) => void;
+  removeCourseChoiceGroup: (id: string) => void;
 
   // Required CRNs (specific sections that must be included)
   requiredCRNs: string[];
@@ -37,6 +43,12 @@ interface AppState {
   addUnavailableBlock: (block: AvailabilityBlock) => void;
   removeUnavailableBlock: (index: number) => void;
   clearUnavailableBlocks: () => void;
+
+  // Credit range
+  minCredits?: number;
+  maxCredits?: number;
+  setMinCredits: (credits?: number) => void;
+  setMaxCredits: (credits?: number) => void;
 
   // Filters
   filters: ScheduleFilters;
@@ -82,6 +94,20 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
+      // Course requirement groups
+      courseChoiceGroups: [],
+      addCourseChoiceGroup: (group) =>
+        set((state) => ({
+          courseChoiceGroups: [
+            ...state.courseChoiceGroups.filter((current) => current.id !== group.id),
+            group,
+          ],
+        })),
+      removeCourseChoiceGroup: (id) =>
+        set((state) => ({
+          courseChoiceGroups: state.courseChoiceGroups.filter((group) => group.id !== id),
+        })),
+
       // Required CRNs
       requiredCRNs: [],
       addRequiredCRN: (crn) =>
@@ -124,6 +150,12 @@ export const useAppStore = create<AppState>()(
         })),
       clearUnavailableBlocks: () => set({ unavailableBlocks: [] }),
 
+      // Credit range
+      minCredits: undefined,
+      maxCredits: undefined,
+      setMinCredits: (credits) => set({ minCredits: credits }),
+      setMaxCredits: (credits) => set({ maxCredits: credits }),
+
       // Filters
       filters: {
         status: ['Open' as Status],
@@ -164,13 +196,17 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'njit-schedule-pro-storage',
-      // Only persist bookmarks, not temporary state
+      version: 2,
+      // Only persist bookmarks, not builder inputs or generated schedules.
       partialize: (state) => ({
         bookmarkedSchedules: state.bookmarkedSchedules,
-        // Cap at 50 to stay well within localStorage limits
-        schedules: state.schedules.slice(0, 50),
-        selectedScheduleIndex: state.selectedScheduleIndex,
       }),
+      migrate: (persistedState) => {
+        const persisted = persistedState as Partial<AppState>;
+        return {
+          bookmarkedSchedules: persisted.bookmarkedSchedules || [],
+        };
+      },
     }
   )
 );

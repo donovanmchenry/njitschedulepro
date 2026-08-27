@@ -1,0 +1,422 @@
+[
+  {
+    "id": "course_spacing_and_day_off",
+    "prompt": "yo i need cs114 and math111 i guess and dont make me come in friday",
+    "catalog_basis": "B.S. Computer Science course sequence",
+    "expected": {
+      "courses": ["CS 114", "MATH 111"],
+      "unavailable_blocks": [{"day": "Fri", "start_min": 0, "end_min": 1440}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "punctuation_and_morning",
+    "prompt": "put me in CS-280, cs 241, and MATH333. morning stuff cuz i got things later",
+    "catalog_basis": "B.S. Computer Science second-year sequence",
+    "expected": {
+      "courses": ["CS 280", "CS 241", "MATH 333"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": "morning",
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "run_together_keys",
+    "prompt": "cs288 cs332 cs341 cs356. thats literally it stop asking questions",
+    "catalog_basis": "B.S. Computer Science third-year sequence",
+    "expected": {
+      "courses": ["CS 288", "CS 332", "CS 341", "CS 356"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "work_blocks_two_days",
+    "prompt": "need cs 331 and cs350 but i work tuesday and thursday 2 to 6 so obviously dont put class there",
+    "catalog_basis": "B.S. Computer Science third-year sequence",
+    "expected": {
+      "courses": ["CS 331", "CS 350"],
+      "unavailable_blocks": [
+        {"day": "Tue", "start_min": 840, "end_min": 1080},
+        {"day": "Thu", "start_min": 840, "end_min": 1080}
+      ],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "late_start_global",
+    "prompt": "cs 351 and ywcc307 and no class before 11 on weekdays im not waking up for that",
+    "catalog_basis": "B.S. Computer Science third-year sequence",
+    "expected": {
+      "courses": ["CS 351", "YWCC 307"],
+      "unavailable_blocks": [
+        {"day": "Mon", "start_min": 0, "end_min": 660},
+        {"day": "Tue", "start_min": 0, "end_min": 660},
+        {"day": "Wed", "start_min": 0, "end_min": 660},
+        {"day": "Thu", "start_min": 0, "end_min": 660},
+        {"day": "Fri", "start_min": 0, "end_min": 660}
+      ],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "evening_preference",
+    "prompt": "give me cs435 and cs490 at night or evening whatever you call it",
+    "catalog_basis": "B.S. Computer Science fourth-year sequence",
+    "expected": {
+      "courses": ["CS 435", "CS 490"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": "evening",
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "credit_range",
+    "prompt": "i need cs 491 and like 12 to 15 credits total dont make it complicated",
+    "catalog_basis": "B.S. Computer Science fourth-year sequence",
+    "expected": {
+      "courses": ["CS 491"],
+      "unavailable_blocks": [],
+      "min_credits": 12,
+      "max_credits": 15,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "exact_credits",
+    "prompt": "15 credits exactly. cs 435 cs490 and whatever else no wait dont add whatever else just those two",
+    "catalog_basis": "B.S. Computer Science fourth-year sequence",
+    "expected": {
+      "courses": ["CS 435", "CS 490"],
+      "unavailable_blocks": [],
+      "min_credits": 15,
+      "max_credits": 15,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "online_only",
+    "prompt": "CS301 and MATH333 online only because parking is stupid",
+    "catalog_basis": "Computer Science and Data Science prerequisites",
+    "expected": {
+      "courses": ["CS 301", "MATH 333"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": "Online"
+    }
+  },
+  {
+    "id": "async_only",
+    "prompt": "is392 and is465 but asynchronous only i dont wanna log in at a specific time",
+    "catalog_basis": "Artificial Intelligence minor electives",
+    "expected": {
+      "courses": ["IS 392", "IS 465"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": "Async"
+    }
+  },
+  {
+    "id": "hybrid_preference",
+    "prompt": "it201 it202 and is331, hybrid pls i can come in sometimes just not always",
+    "catalog_basis": "B.S. Information Technology requirements",
+    "expected": {
+      "courses": ["IT 201", "IT 202", "IS 331"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": "Hybrid"
+    }
+  },
+  {
+    "id": "in_person_preference",
+    "prompt": "IT340 and IT420 in person. dont give me zoom school",
+    "catalog_basis": "B.S. Information Technology requirements",
+    "expected": {
+      "courses": ["IT 340", "IT 420"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": "In-Person"
+    }
+  },
+  {
+    "id": "it_capstone_and_no_monday",
+    "prompt": "i think im graduating so IT 490 and 491 and absolutely nothing monday",
+    "catalog_basis": "B.S. Information Technology capstone sequence",
+    "expected": {
+      "courses": ["IT 490", "IT 491"],
+      "unavailable_blocks": [{"day": "Mon", "start_min": 0, "end_min": 1440}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "ai_minor_courses",
+    "prompt": "doing the ai minor thing so cs375 ds400 ds450 and cs482, afternoons i guess",
+    "catalog_basis": "Artificial Intelligence minor for CS and DS majors",
+    "expected": {
+      "courses": ["CS 375", "DS 400", "DS 450", "CS 482"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": "afternoon",
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "data_science_prereqs",
+    "prompt": "schedule DS340 with cs114 and math 333 because apparently those go together, no wed",
+    "catalog_basis": "DS 340 catalog prerequisites",
+    "expected": {
+      "courses": ["DS 340", "CS 114", "MATH 333"],
+      "unavailable_blocks": [{"day": "Wed", "start_min": 0, "end_min": 1440}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "deep_learning_courses",
+    "prompt": "DS 377 and cs301. earliest ones you got. yes i know it says describe a whole schedule",
+    "catalog_basis": "DS 377 catalog prerequisites",
+    "expected": {
+      "courses": ["DS 377", "CS 301"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": "morning",
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "time_with_minutes",
+    "prompt": "CS 100 and DS100 but tuesday 9:30am to 12:15 i got an appointment thing every week",
+    "catalog_basis": "Computing Literacy GER course options",
+    "expected": {
+      "courses": ["CS 100", "DS 100"],
+      "unavailable_blocks": [{"day": "Tue", "start_min": 570, "end_min": 735}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "two_uneven_blocks",
+    "prompt": "cs100. cant do monday after 4 or friday before 1 because reasons",
+    "catalog_basis": "CS 100 Computing Literacy GER option",
+    "expected": {
+      "courses": ["CS 100"],
+      "unavailable_blocks": [
+        {"day": "Mon", "start_min": 960, "end_min": 1440},
+        {"day": "Fri", "start_min": 0, "end_min": 780}
+      ],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "weekend_block",
+    "prompt": "cs485 once, dont add it twice, and no saturday or sunday school obviously",
+    "catalog_basis": "B.S. Computer Science special topics elective rules",
+    "expected": {
+      "courses": ["CS 485"],
+      "unavailable_blocks": [
+        {"day": "Sat", "start_min": 0, "end_min": 1440},
+        {"day": "Sun", "start_min": 0, "end_min": 1440}
+      ],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "duplicate_course",
+    "prompt": "CS 485 cs485 CS485 one class not three, why is this box making me type",
+    "catalog_basis": "B.S. Computer Science special topics elective rules",
+    "expected": {
+      "courses": ["CS 485"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "do_not_invent_from_topic",
+    "prompt": "i want cybersecurity classes maybe networks and hacking stuff idk. no friday",
+    "catalog_basis": "CS cybersecurity and IT security offerings",
+    "expected": {
+      "courses": [],
+      "unavailable_blocks": [{"day": "Fri", "start_min": 0, "end_min": 1440}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "ignore_negated_course",
+    "prompt": "add cs350 and cs351. not CS356, i said not that one. mornings",
+    "catalog_basis": "B.S. Computer Science third-year requirements",
+    "expected": {
+      "courses": ["CS 350", "CS 351"],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": "morning",
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "course_correction",
+    "prompt": "CS 370 wait no i meant CS 375 and DS410. friday off",
+    "catalog_basis": "Artificial Intelligence minor requirements",
+    "expected": {
+      "courses": ["CS 375", "DS 410"],
+      "unavailable_blocks": [{"day": "Fri", "start_min": 0, "end_min": 1440}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "credit_cap_and_day_block",
+    "prompt": "CS 444, DS450, CS482. max 14 credits and i got work wed noon til 5",
+    "catalog_basis": "Artificial Intelligence minor electives",
+    "expected": {
+      "courses": ["CS 444", "DS 450", "CS 482"],
+      "unavailable_blocks": [{"day": "Wed", "start_min": 720, "end_min": 1020}],
+      "min_credits": null,
+      "max_credits": 14,
+      "time_preference": null,
+      "delivery_preference": null
+    }
+  },
+  {
+    "id": "minimum_credits_and_delivery",
+    "prompt": "at least 12 credits with IT230 IT330 IT332 and make it in person i guess",
+    "catalog_basis": "B.S. Information Technology security electives",
+    "expected": {
+      "courses": ["IT 230", "IT 330", "IT 332"],
+      "unavailable_blocks": [],
+      "min_credits": 12,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": "In-Person"
+    }
+  },
+  {
+    "id": "elective_requirement_count",
+    "prompt": "i need 2 CS electives 300 or above. dont tell me to search them one by one thats your job",
+    "catalog_basis": "B.S. Computer Science CS elective requirements",
+    "expected": {
+      "courses": [],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null,
+      "course_requirements": [
+        {"departments": ["CS"], "minimum_level": 300, "course_count": 2}
+      ]
+    }
+  },
+  {
+    "id": "multi_department_elective",
+    "prompt": "CS slash IS slash IT slash DS elective 300 and up, one of them, whatever fits and not friday",
+    "catalog_basis": "B.S. Computer Science fourth-year elective requirement",
+    "expected": {
+      "courses": [],
+      "unavailable_blocks": [{"day": "Fri", "start_min": 0, "end_min": 1440}],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": null,
+      "course_requirements": [
+        {"departments": ["CS", "IS", "IT", "DS"], "minimum_level": 300, "course_count": 1}
+      ]
+    }
+  },
+  {
+    "id": "computing_literacy_named_requirement",
+    "prompt": "just give me something that counts for computing literacy and make it online, i dont know the course numbers",
+    "catalog_basis": "NJIT Computing Literacy GER",
+    "expected": {
+      "courses": [],
+      "unavailable_blocks": [],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": null,
+      "delivery_preference": "Online",
+      "named_requirements": ["Computing Literacy GER"]
+    }
+  },
+  {
+    "id": "contradictory_time_request",
+    "prompt": "morning classes only but also nothing before noon on weekdays. cs114. make it work somehow",
+    "catalog_basis": "CS 114 course selection with contradictory constraints",
+    "expected": {
+      "courses": ["CS 114"],
+      "unavailable_blocks": [
+        {"day": "Mon", "start_min": 0, "end_min": 720},
+        {"day": "Tue", "start_min": 0, "end_min": 720},
+        {"day": "Wed", "start_min": 0, "end_min": 720},
+        {"day": "Thu", "start_min": 0, "end_min": 720},
+        {"day": "Fri", "start_min": 0, "end_min": 720}
+      ],
+      "min_credits": null,
+      "max_credits": null,
+      "time_preference": "morning",
+      "delivery_preference": null
+    },
+    "expected_confidence": "low"
+  },
+  {
+    "id": "contradictory_credit_request",
+    "prompt": "minimum 18 credits but max 12 because my advisor said both i think. CS100",
+    "catalog_basis": "CS 100 with an invalid credit range",
+    "expected": {
+      "courses": ["CS 100"],
+      "unavailable_blocks": [],
+      "min_credits": 18,
+      "max_credits": 12,
+      "time_preference": null,
+      "delivery_preference": null
+    },
+    "expected_confidence": "low"
+  }
+]
