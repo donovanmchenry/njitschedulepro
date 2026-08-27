@@ -1,163 +1,153 @@
-"""AI-powered natural language schedule parsing using Anthropic Claude."""
+"""AI-assisted schedule intent extraction with deterministic resolution."""
+
+from __future__ import annotations
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from anthropic import Anthropic
-from pydantic import BaseModel
+from anthropic import AsyncAnthropic
+from pydantic import BaseModel, Field, ValidationError
 
-from app.models import DayOfWeek
-
-
-class ParsedConstraints(BaseModel):
-    """Parsed constraints from natural language input."""
-
-    courses: List[str] = []
-    unavailable_blocks: List[Dict[str, Any]] = []
-    min_credits: Optional[int] = None
-    max_credits: Optional[int] = None
-    time_preferences: Optional[str] = None
-    delivery_preference: Optional[str] = None
+from app.intent import (
+    ExtractedScheduleIntent,
+    IntentIssueSeverity,
+    ResolvedScheduleIntent,
+    resolve_schedule_intent,
+)
+from app.models import Offering
 
 
 class AIParseRequest(BaseModel):
-    """Request to parse natural language schedule description."""
+    """Request to interpret a natural-language schedule description."""
 
-    prompt: str
-    user_api_key: Optional[str] = None
+    prompt: str = Field(..., min_length=3, max_length=1000)
 
 
 class AIParseResponse(BaseModel):
-    """Response from AI parsing."""
+    """Catalog-resolved interpretation returned to the review UI."""
 
-    constraints: ParsedConstraints
+    constraints: ResolvedScheduleIntent
     confidence: str
-    raw_response: str
+    model: str | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
 
 
-# In-memory rate limiting storage
-# Format: {ip_address: {"count": int, "reset_time": datetime}}
-rate_limit_storage: Dict[str, Dict] = {}
+SYSTEM_PROMPT = """You extract scheduling intent from an NJIT student's description.
 
-
-DAY_MAP = {
-    "monday": "Mon",
-    "tuesday": "Tue",
-    "wednesday": "Wed",
-    "thursday": "Thu",
-    "friday": "Fri",
-    "saturday": "Sat",
-    "sunday": "Sun",
-    "mon": "Mon",
-    "tue": "Tue",
-    "wed": "Wed",
-    "thu": "Thu",
-    "fri": "Fri",
-    "sat": "Sat",
-    "sun": "Sun",
-    "m": "Mon",
-    "t": "Tue",
-    "w": "Wed",
-    "r": "Thu",  # Common abbreviation
-    "f": "Fri",
-}
-
-
-SYSTEM_PROMPT = """You are an AI assistant that helps students describe their ideal course schedule. Parse natural language into structured JSON constraints.
-
-Output ONLY valid JSON in this exact format:
-{
-  "courses": ["CS 100", "MATH 111"],
-  "unavailable_blocks": [
-    {"day": "Tue", "start_min": 840, "end_min": 960},
-    {"day": "Thu", "start_min": 840, "end_min": 960}
-  ],
-  "min_credits": 12,
-  "max_credits": 18,
-  "time_preferences": "morning",
-  "delivery_preference": "in-person",
-  "confidence": "high"
-}
+The API constrains your response to a JSON schema. Fill every field.
 
 Rules:
-- Course keys: "SUBJ ###" format (e.g., "CS 100", "MATH 111")
-- Days: Mon, Tue, Wed, Thu, Fri, Sat, Sun
-- Times: minutes from midnight (e.g., 10am = 600, 2pm = 840)
-- Common times: 8am=480, 9am=540, 10am=600, 12pm=720, 2pm=840, 4pm=960, 6pm=1080
-- Time preferences: "morning" (before 12pm), "afternoon" (12pm-5pm), "evening" (after 5pm)
-- Delivery: "in-person", "online", "hybrid", "async"
-- Confidence: "high", "medium", "low" based on clarity
+- Exact courses belong in courses, normalized as "SUBJ ###".
+- A negated course belongs only in excluded_courses.
+- If the student corrects a course, keep only the corrected course.
+- Requirements such as "two CS electives 300 or above" belong in course_groups.
+- Never turn a level requirement into fake courses such as "CS 300" or "CS 300+".
+- "Computing Literacy" or "Computing Literacy GER" maps to named requirement
+  computing_literacy_ger. Do not choose an arbitrary course for it.
+- A broad topic without course numbers or a supported named requirement, such as
+  "cybersecurity stuff", belongs in unresolved_requests. Do not invent courses.
+- Valid days are Mon, Tue, Wed, Thu, Fri, Sat, and Sun.
+- Times are minutes from midnight. A full unavailable day is 0 through 1440.
+- In ordinary student schedule language, bare hours 1 through 7 mean PM unless the
+  student says AM, morning, or overnight. Thus "2 to 6" is 840 through 1080,
+  "after 4" starts at 960, and "before 1" ends at 780.
+- Bare hours 8 through 11 mean AM unless the surrounding text says PM or evening.
+- "Noon" is 720 and "midnight" is 0.
+- "Only", "must", "nothing", "no classes", and "can't" indicate required constraints.
+- "Prefer", "would like", "if possible", and "I guess" indicate preferred constraints.
+- Use required for an unqualified delivery request such as "online only".
+- time_preference is morning, afternoon, evening, or null.
+- delivery_preference is In-Person, Online, Hybrid, Async, or null.
+- If a preference value is null, its strength must also be null.
+- Preserve contradictory statements instead of silently fixing them. Deterministic code
+  will identify conflicts for the student.
+- confidence is high, medium, or low based on how clearly the text maps to this schema.
+"""
 
-Examples:
-Input: "I need CS 100 and CS 114, no Friday classes"
-Output: {"courses": ["CS 100", "CS 114"], "unavailable_blocks": [{"day": "Fri", "start_min": 0, "end_min": 1439}], "confidence": "high"}
 
-Input: "MATH 111 and PHYS 111, prefer morning classes, 12-15 credits"
-Output: {"courses": ["MATH 111", "PHYS 111"], "time_preferences": "morning", "min_credits": 12, "max_credits": 15, "confidence": "high"}
+def _legacy_defaults(payload: dict[str, Any]) -> dict[str, Any]:
+    """Keep local tests and saved fixtures compatible with the richer schema."""
+    defaults: dict[str, Any] = {
+        "courses": [],
+        "excluded_courses": [],
+        "course_groups": [],
+        "named_requirements": [],
+        "unavailable_blocks": [],
+        "min_credits": None,
+        "max_credits": None,
+        "time_preference": None,
+        "time_preference_strength": None,
+        "delivery_preference": None,
+        "delivery_preference_strength": None,
+        "unresolved_requests": [],
+        "confidence": "medium",
+    }
+    return {**defaults, **payload}
 
-Input: "CS courses, busy Tuesdays 2-4pm, no classes before 10am"
-Output: {"courses": [], "unavailable_blocks": [{"day": "Tue", "start_min": 840, "end_min": 960}, {"day": "Mon", "start_min": 0, "end_min": 600}, {"day": "Tue", "start_min": 0, "end_min": 600}, {"day": "Wed", "start_min": 0, "end_min": 600}, {"day": "Thu", "start_min": 0, "end_min": 600}, {"day": "Fri", "start_min": 0, "end_min": 600}], "confidence": "medium"}
 
-Return ONLY the JSON object, no explanations."""
+def _resolved_confidence(extracted: ExtractedScheduleIntent, resolved: ResolvedScheduleIntent) -> str:
+    """Blocking deterministic conflicts always make the interpretation low confidence."""
+    if any(issue.severity == IntentIssueSeverity.BLOCKING for issue in resolved.issues):
+        return "low"
+    return extracted.confidence
+
+
+def parse_constraint_response(
+    response_text: str,
+    catalog: list[Offering] | None = None,
+) -> AIParseResponse:
+    """Parse structured model output and resolve it against application data."""
+    cleaned = response_text.strip()
+    if "```json" in cleaned:
+        cleaned = cleaned.split("```json", 1)[1].split("```", 1)[0].strip()
+    elif "```" in cleaned:
+        cleaned = cleaned.split("```", 1)[1].split("```", 1)[0].strip()
+
+    try:
+        payload = json.loads(cleaned)
+        extracted = ExtractedScheduleIntent.model_validate(_legacy_defaults(payload))
+        resolved = resolve_schedule_intent(extracted, catalog)
+        return AIParseResponse(
+            constraints=resolved,
+            confidence=_resolved_confidence(extracted, resolved),
+        )
+    except (json.JSONDecodeError, ValidationError, AttributeError, TypeError) as exc:
+        raise ValueError("The AI returned an invalid schedule description") from exc
 
 
 async def parse_natural_language(
-    prompt: str, user_api_key: Optional[str] = None
+    prompt: str,
+    catalog: list[Offering] | None = None,
 ) -> AIParseResponse:
-    """
-    Parse natural language schedule description into structured constraints.
-
-    Args:
-        prompt: User's natural language description
-        user_api_key: Optional user-provided API key
-
-    Returns:
-        Parsed constraints and confidence score
-    """
-    # Use user's key if provided, otherwise use shared pool key
-    api_key = user_api_key or os.getenv("ANTHROPIC_API_KEY")
-
+    """Extract one strict model response, then resolve it deterministically."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
-        raise ValueError("No Anthropic API key available")
+        raise RuntimeError("AI schedule parsing is not configured")
 
-    client = Anthropic(api_key=api_key)
-
-    # Call Claude API
-    message = client.messages.create(
-        model="claude-3-5-haiku-20241022",  # Haiku is fast and cheap
-        max_tokens=1024,
+    model = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+    client = AsyncAnthropic(api_key=api_key)
+    message = await client.messages.parse(
+        model=model,
+        max_tokens=1536,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
+        output_format=ExtractedScheduleIntent,
     )
 
-    # Extract response
-    response_text = message.content[0].text.strip()
-
-    # Parse JSON response
-    try:
-        # Try to extract JSON if wrapped in markdown code blocks
-        if "```json" in response_text:
-            response_text = response_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in response_text:
-            response_text = response_text.split("```")[1].split("```")[0].strip()
-
-        parsed = json.loads(response_text)
-
-        # Extract confidence (default to medium if not provided)
-        confidence = parsed.pop("confidence", "medium")
-
-        # Create constraints object
-        constraints = ParsedConstraints(**parsed)
-
-        return AIParseResponse(
-            constraints=constraints, confidence=confidence, raw_response=response_text
-        )
-
-    except (json.JSONDecodeError, Exception) as e:
-        # If parsing fails, return empty constraints with low confidence
-        return AIParseResponse(
-            constraints=ParsedConstraints(),
-            confidence="low",
-            raw_response=f"Error parsing response: {str(e)}\n\nRaw: {response_text}",
-        )
+    if message.stop_reason in {"refusal", "max_tokens"}:
+        raise ValueError(f"The AI response stopped with reason: {message.stop_reason}")
+    if not message.content or not hasattr(message.content[0], "parsed_output"):
+        raise ValueError("The AI returned an empty schedule description")
+    extracted = message.content[0].parsed_output
+    if extracted is None:
+        raise ValueError("The AI returned an invalid schedule description")
+    resolved = resolve_schedule_intent(extracted, catalog)
+    return AIParseResponse(
+        constraints=resolved,
+        confidence=_resolved_confidence(extracted, resolved),
+        model=model,
+        input_tokens=message.usage.input_tokens,
+        output_tokens=message.usage.output_tokens,
+    )

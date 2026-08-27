@@ -1,7 +1,6 @@
 """Tests for CSV normalization."""
 
 import pandas as pd
-import pytest
 
 from app.models import DayOfWeek, DeliveryMode, Status
 from app.normalizer import (

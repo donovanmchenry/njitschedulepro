@@ -1,223 +1,177 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Sparkles, Settings, AlertCircle, Loader2, Info } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, Check, Loader2 } from 'lucide-react';
 import { apiUrl } from '@/lib/api';
+import { fieldControlClass, primaryButtonClass, secondaryButtonClass } from '@/lib/uiStyles';
+import { Notice } from './Notice';
+import {
+  AIParseResult,
+  DAY_NAMES,
+  ParsedScheduleConstraints,
+  formatAvailabilityRange,
+} from '@/types';
 
 interface AIScheduleInputProps {
-  onConstraintsParsed: (constraints: any) => void;
+  onConstraintsParsed: (constraints: ParsedScheduleConstraints) => void;
 }
 
 export function AIScheduleInput({ onConstraintsParsed }: AIScheduleInputProps) {
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [apiKey, setApiKey] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('anthropic-api-key') || '';
-    }
-    return '';
-  });
-  const [usage, setUsage] = useState<any>(null);
-
-  // Pre-fetch usage stats on mount so the limit is visible before the first request
-  useEffect(() => {
-    if (apiKey) return; // irrelevant when using own key
-    fetch(apiUrl('/ai/usage'))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data) setUsage(data); })
-      .catch(() => {});
-  }, []);
-
-  const saveApiKey = () => {
-    if (apiKey.trim()) {
-      localStorage.setItem('anthropic-api-key', apiKey.trim());
-      setShowSettings(false);
-    } else {
-      localStorage.removeItem('anthropic-api-key');
-    }
-  };
-
-  const clearApiKey = () => {
-    setApiKey('');
-    localStorage.removeItem('anthropic-api-key');
-  };
+  const [parsed, setParsed] = useState<AIParseResult | null>(null);
 
   const handleParse = async () => {
-    if (!prompt.trim()) {
-      setError('Please describe your ideal schedule');
-      return;
-    }
-
+    if (!prompt.trim()) return;
     setIsLoading(true);
     setError(null);
+    setParsed(null);
 
     try {
       const response = await fetch(apiUrl('/ai/parse-schedule'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: prompt.trim(),
-          user_api_key: apiKey.trim() || null,
-        }),
+        body: JSON.stringify({ prompt: prompt.trim() }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to parse schedule');
-      }
-
       const data = await response.json();
-      setUsage(data.usage);
-
-      if (data.success && data.constraints) {
-        onConstraintsParsed(data.constraints);
-        setPrompt(''); // Clear input after success
-      } else {
-        setError('Could not understand your request. Please try rephrasing.');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      if (!response.ok) throw new Error(data.detail || 'Could not interpret that description');
+      setParsed(data as AIParseResult);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not interpret that description');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      handleParse();
-    }
+  const handleApply = () => {
+    if (!parsed) return;
+    onConstraintsParsed(parsed.constraints);
+    setParsed(null);
+    setPrompt('');
   };
 
+  const constraints = parsed?.constraints;
+  const blockingIssues = constraints?.issues.filter((issue) => issue.severity === 'blocking') || [];
+
   return (
-    <div className="space-y-3">
-      {/* Header with Settings */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles className="text-njit-red" size={20} />
-          <h4 className="font-semibold text-gray-700 dark:text-gray-200">
-            AI Schedule Assistant
-          </h4>
-        </div>
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Describe your schedule</h3>
+        <span className="text-[11px] text-gray-400">Optional</span>
+      </div>
+
+      <textarea
+        value={prompt}
+        onChange={(event) => setPrompt(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) handleParse();
+        }}
+        placeholder="Example: CS 114 and MATH 111, no Friday classes, mornings only"
+        disabled={isLoading}
+        rows={2}
+        maxLength={1000}
+        className={`w-full resize-none px-2.5 py-2 text-sm ${fieldControlClass}`}
+      />
+
+      <div className="mt-2 flex justify-end">
         <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          title="API Key Settings"
-        >
-          <Settings size={16} className="text-gray-600 dark:text-gray-400" />
-        </button>
-      </div>
-
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-3 border border-gray-200 dark:border-gray-700">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Anthropic API Key (Optional)
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-ant-..."
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-              <button
-                onClick={saveApiKey}
-                className="px-4 py-2 bg-njit-red text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
-              >
-                Save
-              </button>
-              {apiKey && (
-                <button
-                  onClick={clearApiKey}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              {apiKey
-                ? '✓ Using your API key (unlimited)'
-                : `Shared pool: ${usage?.daily_remaining || 5} requests left today`}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Get a key at{' '}
-              <a
-                href="https://console.anthropic.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-njit-red hover:underline"
-              >
-                console.anthropic.com
-              </a>
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Info Box */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 flex gap-2">
-        <Info size={16} className="text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-blue-700 dark:text-blue-300">
-          <p className="font-medium mb-1">Describe your ideal schedule:</p>
-          <p>Example: &quot;I need CS 100 and CS 114, no Friday classes, prefer morning sessions&quot;</p>
-        </div>
-      </div>
-
-      {/* Input Area */}
-      <div>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Describe your ideal schedule..."
-          disabled={isLoading}
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-50"
-        />
-      </div>
-
-      <div className="flex items-center justify-between">
-        <button
+          type="button"
           onClick={handleParse}
           disabled={isLoading || !prompt.trim()}
-          className="flex items-center gap-2 px-4 py-2 bg-njit-red hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white rounded-lg text-sm font-medium transition-colors disabled:cursor-not-allowed"
+          className={`gap-1.5 px-3 py-1.5 text-xs ${secondaryButtonClass}`}
         >
-          {isLoading ? (
-            <>
-              <Loader2 size={14} className="animate-spin" />
-              Parsing...
-            </>
-          ) : (
-            'Parse'
-          )}
+          {isLoading && <Loader2 size={15} className="animate-spin" />}
+          {isLoading ? 'Reading…' : 'Check details'}
         </button>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Tip: Press Cmd/Ctrl + Enter to parse
-        </p>
       </div>
 
-      {/* Error Display */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 flex gap-2">
-          <AlertCircle size={16} className="text-red-600 dark:text-red-400 flex-shrink-0" />
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-        </div>
+        <Notice tone="error" className="mt-2 text-xs">{error}</Notice>
       )}
 
-      {/* Usage Display */}
-      {usage && !apiKey && (
-        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-          <p>
-            Daily: {usage.daily_count || 0}/{usage.daily_count + usage.daily_remaining || 5}
-          </p>
-          <p>
-            Total: {usage.total_count || 0}/{usage.total_count + usage.total_remaining || 15}
-          </p>
+      {constraints && parsed && (
+        <div className="mt-2 rounded-md border border-gray-200 bg-white p-2 dark:border-gray-700 dark:bg-gray-800">
+          <div className="mb-2 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">Check these details</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={blockingIssues.length > 0}
+              className={`gap-1 px-2.5 py-1.5 text-xs ${primaryButtonClass}`}
+            >
+              <Check size={14} /> {blockingIssues.length ? 'Needs changes' : 'Use these'}
+            </button>
+          </div>
+          <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+            {constraints.courses.length > 0 && (
+              <p><span className="font-semibold">Courses:</span> {constraints.courses.join(', ')}</p>
+            )}
+            {constraints.course_groups.length > 0 && (
+              <div>
+                <span className="font-semibold">Course requirements:</span>
+                <ul className="mt-0.5 space-y-0.5">
+                  {constraints.course_groups.map((group) => (
+                    <li key={group.id}>
+                      {group.label} · {group.open_course_count} open of {group.total_course_count} offered
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {constraints.excluded_courses.length > 0 && (
+              <p><span className="font-semibold">Leave out:</span> {constraints.excluded_courses.join(', ')}</p>
+            )}
+            {constraints.unavailable_blocks.length > 0 && (
+              <div>
+                <span className="font-semibold">No classes:</span>{' '}
+                {constraints.unavailable_blocks.map((block) => (
+                  <span key={`${block.day}-${block.start_min}-${block.end_min}`} className="mr-2 inline-block">
+                    {DAY_NAMES[block.day]} {formatAvailabilityRange(block.start_min, block.end_min)}
+                  </span>
+                ))}
+              </div>
+            )}
+            {(constraints.min_credits != null || constraints.max_credits != null) && (
+              <p>
+                <span className="font-semibold">Credits:</span>{' '}
+                {constraints.min_credits != null && `minimum ${constraints.min_credits}`}
+                {constraints.min_credits != null && constraints.max_credits != null && ' · '}
+                {constraints.max_credits != null && `maximum ${constraints.max_credits}`}
+              </p>
+            )}
+            {constraints.time_preference && (
+              <p>
+                <span className="font-semibold">Time:</span> {constraints.time_preference}
+                {constraints.time_preference_strength === 'preferred' ? ' preferred' : ' only'}
+              </p>
+            )}
+            {constraints.delivery_preference && (
+              <p>
+                <span className="font-semibold">Class type:</span> {constraints.delivery_preference}
+                {constraints.delivery_preference_strength === 'preferred' ? ' preferred' : ' only'}
+              </p>
+            )}
+            {constraints.issues.length > 0 && (
+              <div className="mt-2 border-t border-gray-200 pt-2 dark:border-gray-700">
+                {constraints.issues.map((issue, index) => (
+                  <div
+                    key={`${issue.code}-${index}`}
+                    className={`flex items-start gap-1.5 py-0.5 ${
+                      issue.severity === 'blocking'
+                        ? 'text-red-700 dark:text-red-300'
+                        : 'text-amber-700 dark:text-amber-300'
+                    }`}
+                  >
+                    <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                    <span>{issue.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

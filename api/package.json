@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
     "start": "poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "build": "poetry run python -m compileall -q app",
     "test": "poetry run pytest",
     "test:coverage": "poetry run pytest --cov=app --cov-report=html",
     "lint": "poetry run ruff check app tests",

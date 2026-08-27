@@ -1,45 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import { CalendarDays, Clock3, UsersRound } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
-import { Schedule } from '@/types';
+import {
+  classDays,
+  earliestStart,
+  formatGap,
+  instructorNames,
+  latestEnd,
+  totalGapMinutes,
+} from '@/lib/scheduleMetrics';
+import { minutesToTime } from '@/types';
+import { fieldControlClass, panelClass } from '@/lib/uiStyles';
+import { getClosedOfferings } from '@/lib/sectionAvailability';
+import { SectionStatusBadge } from './SectionStatusBadge';
 
 type SortMode = 'score' | 'earliest' | 'latest' | 'gaps' | 'days';
-
-function totalGapMinutes(schedule: Schedule): number {
-  let gaps = 0;
-  const byDay: Record<string, number[]> = {};
-  schedule.offerings.forEach((o) =>
-    o.meetings.forEach((m) => {
-      (byDay[m.day] ??= []).push(m.start_min, m.end_min);
-    })
-  );
-  Object.values(byDay).forEach((times) => {
-    const sorted = [...times].sort((a, b) => a - b);
-    for (let i = 2; i < sorted.length; i += 2)
-      gaps += Math.max(0, sorted[i] - sorted[i - 1]);
-  });
-  return gaps;
-}
-
-function earliestStart(schedule: Schedule): number {
-  const starts = schedule.offerings.flatMap((o) => o.meetings.map((m) => m.start_min));
-  return starts.length ? Math.min(...starts) : Infinity;
-}
-
-function latestStart(schedule: Schedule): number {
-  const starts = schedule.offerings.flatMap((o) => o.meetings.map((m) => m.start_min));
-  return starts.length ? Math.min(...starts) : 0;
-}
-
-function daysOnCampus(schedule: Schedule): number {
-  const days = new Set(
-    schedule.offerings
-      .flatMap((o) => o.meetings.map((m) => m.day))
-      .filter(Boolean)
-  );
-  return days.size;
-}
 
 export function ScheduleList() {
   const { schedules, selectedScheduleIndex, setSelectedScheduleIndex } = useAppStore();
@@ -49,59 +26,79 @@ export function ScheduleList() {
 
   const sortedSchedules = [...schedules].sort((a, b) => {
     if (sortMode === 'earliest') return earliestStart(a) - earliestStart(b);
-    if (sortMode === 'latest') return latestStart(b) - latestStart(a);
+    if (sortMode === 'latest') return earliestStart(b) - earliestStart(a);
     if (sortMode === 'gaps') return totalGapMinutes(a) - totalGapMinutes(b);
-    if (sortMode === 'days') return daysOnCampus(a) - daysOnCampus(b);
-    return a.score - b.score; // 'score' default
+    if (sortMode === 'days') return classDays(a).length - classDays(b).length;
+    return a.score - b.score;
   });
 
-  // Map sorted index back to original index for selection highlighting
-  const originalIndex = (sortedIdx: number) =>
-    schedules.indexOf(sortedSchedules[sortedIdx]);
-
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-6">
-      <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
-        <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-white shrink-0">
-          All Schedules ({schedules.length})
-        </h3>
+    <div className={`${panelClass} p-3`}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-white">Other schedules</h3>
         <select
           value={sortMode}
-          onChange={(e) => setSortMode(e.target.value as SortMode)}
-          className="text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-2 py-2 max-w-[160px] sm:max-w-none"
+          onChange={(event) => setSortMode(event.target.value as SortMode)}
+          aria-label="Sort schedules"
+          className={`max-w-[155px] px-2 py-1.5 text-xs sm:max-w-none ${fieldControlClass}`}
         >
-          <option value="score">Best Score</option>
-          <option value="earliest">Earliest Start</option>
-          <option value="latest">Latest Start</option>
-          <option value="gaps">Fewest Gaps</option>
-          <option value="days">Fewest Days on Campus</option>
+          <option value="score">Recommended</option>
+          <option value="earliest">Starts earliest</option>
+          <option value="latest">Starts latest</option>
+          <option value="gaps">Shortest breaks</option>
+          <option value="days">Fewest days</option>
         </select>
       </div>
 
-      <div className="space-y-2 max-h-64 sm:max-h-96 overflow-y-auto">
-        {sortedSchedules.map((schedule, sortedIdx) => {
-          const origIdx = originalIndex(sortedIdx);
-          const isSelected = origIdx === selectedScheduleIndex;
-          const courseList = schedule.offerings.map((o) => o.course_key).join(', ');
+      <div className="grid max-h-[32rem] grid-cols-1 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+        {sortedSchedules.map((schedule) => {
+          const originalIndex = schedules.indexOf(schedule);
+          const selected = originalIndex === selectedScheduleIndex;
+          const days = classDays(schedule);
+          const professors = instructorNames(schedule);
+          const start = earliestStart(schedule);
+          const end = latestEnd(schedule);
+          const closedCount = getClosedOfferings(schedule).length;
 
           return (
             <button
-              key={origIdx}
-              onClick={() => setSelectedScheduleIndex(origIdx)}
-              className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-                isSelected
-                  ? 'border-njit-red bg-red-50 dark:bg-njit-navy/50'
-                  : 'border-njit-gray dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+              key={originalIndex}
+              type="button"
+              onClick={() => setSelectedScheduleIndex(originalIndex)}
+              className={`rounded-md border p-2 text-left transition ${
+                selected
+                  ? 'border-gray-500 bg-gray-50 dark:border-gray-400 dark:bg-gray-700'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700'
               }`}
             >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold text-sm">Schedule {origIdx + 1}</span>
-                <span className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">
-                  {schedule.total_credits} cr
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-sm font-bold text-gray-900 dark:text-white">
+                  Schedule {originalIndex + 1}
+                </span>
+                <span className="flex items-center gap-1">
+                  {closedCount > 0 && <SectionStatusBadge status="Closed" compact />}
+                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                    {schedule.total_credits} credits
+                  </span>
                 </span>
               </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                {courseList}
+
+              <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+                <div className="flex items-center gap-2">
+                  <CalendarDays size={14} className="shrink-0 text-gray-400" />
+                  <span>{days.length ? days.join(' · ') : 'No fixed class days'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock3 size={14} className="shrink-0 text-gray-400" />
+                  <span>
+                    {Number.isFinite(start) ? `${minutesToTime(start)} to ${minutesToTime(end)}` : 'No fixed meeting time'}
+                    {' · '}{formatGap(totalGapMinutes(schedule))}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <UsersRound size={14} className="shrink-0 text-gray-400" />
+                  <span className="truncate">{professors.length ? professors.join(', ') : 'Instructor TBA'}</span>
+                </div>
               </div>
             </button>
           );

@@ -1,14 +1,13 @@
 """Constraint-based schedule solver using backtracking."""
 
 from collections import defaultdict
+from itertools import combinations
 from typing import Dict, List, Set, Tuple
 
 from app.models import (
-    AvailabilityBlock,
     DayOfWeek,
     Offering,
     Schedule,
-    ScheduleFilters,
     SolveRequest,
 )
 
@@ -121,10 +120,7 @@ class ScheduleSolver:
                         ):
                             valid_time = False
                             break
-                        if (
-                            filters.latest_end is not None
-                            and meeting.end_min > filters.latest_end
-                        ):
+                        if filters.latest_end is not None and meeting.end_min > filters.latest_end:
                             valid_time = False
                             break
                     if not valid_time:
@@ -150,7 +146,7 @@ class ScheduleSolver:
         # Validate required CRNs don't conflict with each other or unavailable times
         for i, offering1 in enumerate(self.required_crn_offerings):
             # Check for conflicts with other required CRNs
-            for offering2 in self.required_crn_offerings[i + 1:]:
+            for offering2 in self.required_crn_offerings[i + 1 :]:
                 if offering1.overlaps_with(offering2):
                     return []  # Required CRNs conflict with each other
 
@@ -161,8 +157,7 @@ class ScheduleSolver:
         # Remove courses from required_course_keys if their CRN is specified
         required_crn_course_keys = {o.course_key for o in self.required_crn_offerings}
         required_courses = [
-            ck for ck in self.request.required_course_keys
-            if ck not in required_crn_course_keys
+            ck for ck in self.request.required_course_keys if ck not in required_crn_course_keys
         ]
 
         # Order courses by fewest valid sections (fail-fast heuristic)
@@ -177,17 +172,72 @@ class ScheduleSolver:
                 # No valid offerings for this course
                 return []
 
-        # Start backtracking with required CRNs already in schedule
-        self._backtrack(required_courses, 0, self.required_crn_offerings.copy())
+        # Choose courses for requirement groups before selecting sections. Exact courses and
+        # pinned CRNs cannot also satisfy a choice group unless that behavior is added explicitly.
+        used_course_keys = required_crn_course_keys | set(required_courses)
+        groups = sorted(
+            self.request.course_choice_groups,
+            key=lambda group: len(group.eligible_course_keys),
+        )
+        self._choose_group_courses(
+            groups,
+            0,
+            used_course_keys,
+            [],
+            required_courses,
+        )
 
         # Sort by score (lower is better)
         self.results.sort(key=lambda s: s.score)
 
         return self.results[: self.request.max_results]
 
-    def _backtrack(
-        self, course_keys: List[str], course_idx: int, current_schedule: List[Offering]
+    def _choose_group_courses(
+        self,
+        groups,
+        group_idx: int,
+        used_course_keys: Set[str],
+        chosen_course_keys: List[str],
+        required_courses: List[str],
     ):
+        """Choose distinct current-term courses for each requirement group."""
+        if len(self.results) >= self.request.max_results * 2:
+            return
+
+        if group_idx >= len(groups):
+            course_keys = required_courses + chosen_course_keys
+            course_keys = sorted(
+                course_keys,
+                key=lambda course_key: len(self.offerings_by_course.get(course_key, [])),
+            )
+            self._backtrack(course_keys, 0, self.required_crn_offerings.copy())
+            return
+
+        group = groups[group_idx]
+        eligible = sorted(
+            {
+                course_key
+                for course_key in group.eligible_course_keys
+                if course_key not in used_course_keys
+                and self.offerings_by_course.get(course_key)
+            }
+        )
+        if len(eligible) < group.choose:
+            return
+
+        for selected in combinations(eligible, group.choose):
+            selected_set = set(selected)
+            self._choose_group_courses(
+                groups,
+                group_idx + 1,
+                used_course_keys | selected_set,
+                chosen_course_keys + list(selected),
+                required_courses,
+            )
+            if len(self.results) >= self.request.max_results * 2:
+                return
+
+    def _backtrack(self, course_keys: List[str], course_idx: int, current_schedule: List[Offering]):
         """
         Recursive backtracking to build schedules.
 
@@ -198,10 +248,11 @@ class ScheduleSolver:
         """
         # Base case: all courses scheduled
         if course_idx >= len(course_keys):
+            if self._exceeds_max_gap(current_schedule):
+                return
+
             # Check credits constraint
-            total_credits = sum(
-                o.credits for o in current_schedule if o.credits is not None
-            )
+            total_credits = sum(o.credits for o in current_schedule if o.credits is not None)
             if self.request.min_credits and total_credits < self.request.min_credits:
                 return
             if self.request.max_credits and total_credits > self.request.max_credits:
@@ -296,9 +347,7 @@ class ScheduleSolver:
         prefer_instructors = self.request.filters.prefer_instructors or []
         for offering in schedule:
             if offering.instructor and prefer_instructors:
-                if any(
-                    pref.lower() in offering.instructor.lower() for pref in prefer_instructors
-                ):
+                if any(pref.lower() in offering.instructor.lower() for pref in prefer_instructors):
                     instructor_bonus += 1
 
         # Per-course professor preferences (higher weight: 150)
@@ -306,9 +355,7 @@ class ScheduleSolver:
         for offering in schedule:
             if offering.course_key in preferred_professors and offering.instructor:
                 preferred_profs = preferred_professors[offering.course_key]
-                if any(
-                    pref.lower() in offering.instructor.lower() for pref in preferred_profs
-                ):
+                if any(pref.lower() in offering.instructor.lower() for pref in preferred_profs):
                     instructor_bonus += 1.5  # Higher weight for course-specific preferences
 
         score -= instructor_bonus * 100.0
@@ -316,6 +363,30 @@ class ScheduleSolver:
         # Tertiary: open seats (weight 1)
         total_seats = sum(offering.seats_available or 0 for offering in schedule)
         score -= total_seats * 1.0
+
+        # Soft delivery preference. Hard delivery limits are applied during pre-filtering.
+        preferred_delivery = self.request.filters.preferred_delivery or []
+        if preferred_delivery:
+            delivery_matches = sum(
+                1 for offering in schedule if offering.delivery in preferred_delivery
+            )
+            score -= delivery_matches * 50.0
+
+        # Soft time preference. Penalize only the portion of a meeting outside the window.
+        preferred_time = self.request.filters.preferred_time
+        if preferred_time:
+            preferred_windows = {
+                "morning": (0, 720),
+                "afternoon": (720, 1020),
+                "evening": (1020, 1440),
+            }
+            window_start, window_end = preferred_windows[preferred_time]
+            outside_minutes = 0
+            for offering in schedule:
+                for meeting in offering.meetings:
+                    outside_minutes += max(0, window_start - meeting.start_min)
+                    outside_minutes += max(0, meeting.end_min - window_end)
+            score += outside_minutes * 10.0
 
         # Tie-break: deterministic by sorted CRNs
         crn_sum = sum(int(o.crn) if o.crn.isdigit() else hash(o.crn) for o in schedule)
@@ -339,8 +410,6 @@ class ScheduleSolver:
                 meetings_by_day[meeting.day].append((meeting.start_min, meeting.end_min))
 
         total_gap = 0
-        max_gap = self.request.filters.max_gap_min
-
         for day, meetings in meetings_by_day.items():
             if len(meetings) <= 1:
                 continue
@@ -352,13 +421,27 @@ class ScheduleSolver:
             for i in range(len(meetings) - 1):
                 gap = meetings[i + 1][0] - meetings[i][1]
                 if gap > 0:
-                    # If max_gap is set and exceeded, heavily penalize
-                    if max_gap and gap > max_gap:
-                        total_gap += gap * 10  # Heavily penalize
-                    else:
-                        total_gap += gap
+                    total_gap += gap
 
         return total_gap
+
+    def _exceeds_max_gap(self, schedule: List[Offering]) -> bool:
+        """Return True when any same-day break exceeds the requested hard limit."""
+        max_gap = self.request.filters.max_gap_min
+        if max_gap is None:
+            return False
+
+        meetings_by_day: Dict[DayOfWeek, List[Tuple[int, int]]] = defaultdict(list)
+        for offering in schedule:
+            for meeting in offering.meetings:
+                meetings_by_day[meeting.day].append((meeting.start_min, meeting.end_min))
+
+        for meetings in meetings_by_day.values():
+            meetings = sorted(meetings)
+            for index in range(len(meetings) - 1):
+                if meetings[index + 1][0] - meetings[index][1] > max_gap:
+                    return True
+        return False
 
 
 def solve_schedules(catalog: List[Offering], request: SolveRequest) -> List[Schedule]:

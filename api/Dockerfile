@@ -10,10 +10,11 @@ COPY pyproject.toml poetry.lock* ./
 
 # Install dependencies
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root
+    && poetry install --only main --no-interaction --no-ansi --no-root
 
 # Copy application code
 COPY app ./app
+COPY data ./data
 
 # Note: courseschedules directory should be mounted as a volume in docker-compose
 # For production (Render/Railway), courseschedules should be in the repo root

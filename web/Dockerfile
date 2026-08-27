@@ -13,6 +13,8 @@ RUN pnpm install
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+ARG API_PROXY_TARGET=http://api:8000
+ENV API_PROXY_TARGET=$API_PROXY_TARGET
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 

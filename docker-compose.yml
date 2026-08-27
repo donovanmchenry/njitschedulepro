@@ -12,16 +12,36 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - RELOAD_SECRET=${RELOAD_SECRET:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-haiku-4-5-20251001}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - rate-limit-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     restart: unless-stopped
 
   web:
     build:
       context: ./web
       dockerfile: Dockerfile
+      args:
+        API_PROXY_TARGET: http://api:8000
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://api:8000
+      - API_PROXY_TARGET=http://api:8000
     depends_on:
       - api
     restart: unless-stopped
@@ -29,3 +49,6 @@ services:
 networks:
   default:
     name: njit-schedule-pro
+
+volumes:
+  rate-limit-data:

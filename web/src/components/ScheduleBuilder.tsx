@@ -8,16 +8,36 @@ import { ScheduleView } from './ScheduleView';
 import { ScheduleList } from './ScheduleList';
 import { BookmarkedSchedules } from './BookmarkedSchedules';
 import { AIScheduleInput } from './AIScheduleInput';
-import { SolveRequest, Schedule } from '@/types';
+import { EmptyState } from './EmptyState';
+import { Notice } from './Notice';
+import { ParsedScheduleConstraints, SolveRequest, Schedule } from '@/types';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
+import { primaryButtonClass } from '@/lib/uiStyles';
 import { Calendar, Bookmark } from 'lucide-react';
 
 type Tab = 'generated' | 'bookmarks';
 
+function BuilderStep({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border-t border-gray-200 pt-3 first:border-0 first:pt-0 dark:border-gray-700">
+      <h3 className="mb-2 text-sm font-bold text-gray-900 dark:text-white">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
 export function ScheduleBuilder() {
   const {
+    courses,
     selectedCourseKeys,
+    courseChoiceGroups,
     requiredCRNs,
     preferredProfessors,
     unavailableBlocks,
@@ -28,7 +48,13 @@ export function ScheduleBuilder() {
     setIsLoading,
     bookmarkedSchedules,
     addCourse,
+    addCourseChoiceGroup,
     addUnavailableBlock,
+    updateFilters,
+    minCredits,
+    maxCredits,
+    setMinCredits,
+    setMaxCredits,
   } = useAppStore();
 
   const [error, setError] = useState<string | null>(null);
@@ -40,43 +66,75 @@ export function ScheduleBuilder() {
   } | null>(null);
   const [aiSuccess, setAiSuccess] = useState<string | null>(null);
 
-  const handleAIParsed = (constraints: any) => {
-    // Add courses
-    if (constraints.courses && Array.isArray(constraints.courses)) {
-      constraints.courses.forEach((courseKey: string) => {
-        if (!selectedCourseKeys.includes(courseKey)) {
-          addCourse(courseKey);
-        }
-      });
+  const handleAIParsed = (constraints: ParsedScheduleConstraints) => {
+    const catalogKeys = new Set(courses.map((course) => course.course_key));
+    const existingKeys = new Set(selectedCourseKeys);
+    const validCourses = constraints.courses.filter((courseKey) => catalogKeys.has(courseKey));
+    const missingCourses = constraints.courses.filter((courseKey) => !catalogKeys.has(courseKey));
+
+    validCourses.forEach((courseKey) => {
+      if (!existingKeys.has(courseKey)) addCourse(courseKey);
+    });
+
+    constraints.course_groups.forEach((group) => addCourseChoiceGroup(group));
+
+    constraints.unavailable_blocks.forEach((block) => {
+      const exists = unavailableBlocks.some(
+        (current) =>
+          current.day === block.day &&
+          current.start_min === block.start_min &&
+          current.end_min === block.end_min
+      );
+      if (!exists) addUnavailableBlock(block);
+    });
+
+    setMinCredits(constraints.min_credits ?? undefined);
+    setMaxCredits(constraints.max_credits ?? undefined);
+
+    if (constraints.time_preference && constraints.time_preference_strength === 'preferred') {
+      updateFilters({ preferred_time: constraints.time_preference });
+    } else if (constraints.time_preference === 'morning') {
+      updateFilters({ earliest_start: undefined, latest_end: 12 * 60, preferred_time: undefined });
+    } else if (constraints.time_preference === 'afternoon') {
+      updateFilters({ earliest_start: 12 * 60, latest_end: 17 * 60, preferred_time: undefined });
+    } else if (constraints.time_preference === 'evening') {
+      updateFilters({ earliest_start: 17 * 60, latest_end: undefined, preferred_time: undefined });
     }
 
-    // Add unavailable blocks
-    if (constraints.unavailable_blocks && Array.isArray(constraints.unavailable_blocks)) {
-      constraints.unavailable_blocks.forEach((block: any) => {
-        addUnavailableBlock({
-          day: block.day,
-          start_min: block.start_min,
-          end_min: block.end_min,
+    if (constraints.delivery_preference) {
+      if (constraints.delivery_preference_strength === 'preferred') {
+        updateFilters({ preferred_delivery: [constraints.delivery_preference] });
+      } else {
+        updateFilters({
+          delivery: [constraints.delivery_preference],
+          preferred_delivery: undefined,
         });
-      });
+      }
     }
 
-    // Show success message
-    const summary = [];
-    if (constraints.courses?.length) {
-      summary.push(`${constraints.courses.length} course(s)`);
-    }
-    if (constraints.unavailable_blocks?.length) {
-      summary.push(`${constraints.unavailable_blocks.length} time block(s)`);
-    }
+    const summary = [
+      validCourses.length ? `${validCourses.length} course${validCourses.length === 1 ? '' : 's'}` : '',
+      constraints.course_groups.length
+        ? `${constraints.course_groups.length} course requirement${constraints.course_groups.length === 1 ? '' : 's'}`
+        : '',
+      constraints.unavailable_blocks.length
+        ? `${constraints.unavailable_blocks.length} time${constraints.unavailable_blocks.length === 1 ? '' : 's'} to avoid`
+        : '',
+      missingCourses.length ? `${missingCourses.join(', ')} not found` : '',
+    ].filter(Boolean);
 
-    setAiSuccess(`Added: ${summary.join(', ')}`);
+    setAiSuccess(summary.length ? `Added ${summary.join(' · ')}` : 'Nothing new was found.');
     setTimeout(() => setAiSuccess(null), 5000);
   };
 
   const handleGenerateSchedules = async () => {
-    if (selectedCourseKeys.length === 0 && requiredCRNs.length === 0) {
-      setError('Please select at least one course or CRN');
+    if (selectedCourseKeys.length === 0 && courseChoiceGroups.length === 0 && requiredCRNs.length === 0) {
+      setError('Please select at least one course, requirement, or CRN');
+      return;
+    }
+
+    if (minCredits != null && maxCredits != null && minCredits > maxCredits) {
+      setError('Minimum credits cannot be greater than maximum credits');
       return;
     }
 
@@ -86,8 +144,11 @@ export function ScheduleBuilder() {
 
     const request: SolveRequest = {
       required_course_keys: selectedCourseKeys,
+      course_choice_groups: courseChoiceGroups,
       required_crns: requiredCRNs,
       preferred_professors: preferredProfessors,
+      min_credits: minCredits,
+      max_credits: maxCredits,
       unavailable: unavailableBlocks,
       filters,
       max_results: 500,
@@ -114,9 +175,11 @@ export function ScheduleBuilder() {
           hints.push('Only "Open" sections are included — try enabling Waitlist in Filters.');
         if (requiredCRNs.length > 0)
           hints.push(`You have ${requiredCRNs.length} pinned section(s) — remove CRN pins to allow more flexibility.`);
+        if (courseChoiceGroups.length > 0)
+          hints.push('One of your course requirements may not have enough sections matching the current filters.');
         if (unavailableBlocks.length > 3)
           hints.push('You have many availability restrictions — try removing some to open more time slots.');
-        hints.push('Try broadening your constraints and generating again.');
+        hints.push('Remove a few limits and try again.');
         setNoResultsHints(hints);
       }
     } catch (err) {
@@ -126,95 +189,93 @@ export function ScheduleBuilder() {
     }
   };
 
+  const selectedCourseCount = new Set([
+    ...selectedCourseKeys,
+    ...requiredCRNs
+      .map((crn) =>
+        courses.find((course) => course.sections.some((section) => section.crn === crn))
+          ?.course_key
+      )
+      .filter((courseKey): courseKey is string => Boolean(courseKey)),
+  ]).size + courseChoiceGroups.reduce((total, group) => total + group.choose, 0);
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-6">
-      {/* Left panel - Builder */}
-      <div className="lg:col-span-1 space-y-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-4 md:p-6">
-          <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-800 dark:text-white">
-            Build Your Schedule
+    <div className="grid grid-cols-1 overflow-hidden bg-white lg:h-full lg:grid-cols-[380px_minmax(0,1fr)] dark:bg-gray-800 xl:grid-cols-[420px_minmax(0,1fr)]">
+      <div className="flex min-h-0 flex-col border-b border-gray-200 lg:h-full lg:border-b-0 lg:border-r dark:border-gray-700">
+        <div className="workspace-scrollbar workspace-scrollbar-left flex-1 py-3 pl-5 pr-3 lg:overflow-y-auto">
+          <h2 className="mb-3 text-lg font-bold text-gray-900 dark:text-white">
+            Schedule setup
           </h2>
 
-          <div className="space-y-4 sm:space-y-6">
-            {/* AI Input — hidden until secure implementation is ready */}
-            {/* <section>
-              <AIScheduleInput onConstraintsParsed={handleAIParsed} />
-            </section> */}
+          <div className="space-y-3">
+            <AIScheduleInput onConstraintsParsed={handleAIParsed} />
 
-            {/* AI Success Message — hidden with AI input */}
-            {/* {aiSuccess && (
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded">
-                {aiSuccess}
-              </div>
-            )} */}
+            {aiSuccess && (
+              <Notice tone="success">{aiSuccess}</Notice>
+            )}
 
-            {/* Course Selection */}
-            <section>
-              <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">
-                Select Courses
-              </h3>
+            <BuilderStep title="Courses">
               <CourseSelector />
-            </section>
+            </BuilderStep>
 
-            {/* Availability */}
-            <section>
-              <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">
-                Unavailable Times
-              </h3>
+            <BuilderStep title="Times to avoid">
               <AvailabilityEditor />
-            </section>
+            </BuilderStep>
 
-            {/* Filters */}
-            <section>
-              <h3 className="text-lg font-semibold mb-2 text-gray-700 dark:text-gray-200">
-                Filters & Preferences
-              </h3>
+            <BuilderStep title="Options">
               <FiltersPanel />
-            </section>
-
-            {/* Generate Button */}
-            <button
-              onClick={handleGenerateSchedules}
-              disabled={isLoading || selectedCourseKeys.length === 0}
-              className="w-full bg-njit-red hover:bg-red-700 disabled:bg-njit-gray text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-md"
-            >
-              {isLoading ? 'Generating...' : 'Generate Schedules'}
-            </button>
+            </BuilderStep>
 
             {error && (
-              <div className="bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
-                {error}
-              </div>
+              <Notice tone="error">{error}</Notice>
             )}
 
             {noResultsHints && schedules.length === 0 && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
-                <p className="font-semibold text-amber-800 dark:text-amber-300 mb-2">No schedules found</p>
-                <ul className="space-y-1 text-sm text-amber-700 dark:text-amber-400">
+              <Notice tone="warning">
+                <p className="mb-1 font-semibold">No schedules found</p>
+                <ul className="space-y-1 text-xs">
                   {noResultsHints.map((hint, i) => (
                     <li key={i}>• {hint}</li>
                   ))}
                 </ul>
-              </div>
+              </Notice>
             )}
           </div>
         </div>
+        <div className="shrink-0 border-t border-gray-200 bg-white py-2 pl-5 pr-3 dark:border-gray-700 dark:bg-gray-800">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+            <span>{selectedCourseCount} {selectedCourseCount === 1 ? 'course' : 'courses'}</span>
+            <span>
+              {unavailableBlocks.length} {unavailableBlocks.length === 1 ? 'time' : 'times'} to avoid
+            </span>
+          </div>
+          <button
+            onClick={handleGenerateSchedules}
+            disabled={
+              isLoading ||
+              (selectedCourseKeys.length === 0 &&
+                courseChoiceGroups.length === 0 &&
+                requiredCRNs.length === 0)
+            }
+            className={`w-full px-4 py-2.5 text-sm font-bold ${primaryButtonClass}`}
+          >
+            {isLoading ? 'Finding schedules…' : 'Show schedules'}
+          </button>
+        </div>
       </div>
 
-      {/* Right panels - Results */}
-      <div className="lg:col-span-2 space-y-4">
-        {/* Tab Navigation */}
-        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+      <div className="min-w-0 bg-gray-50 lg:flex lg:h-full lg:min-h-0 lg:flex-col dark:bg-gray-900/40">
+        <div className="flex shrink-0 gap-1 border-b border-gray-200 bg-white px-2 dark:border-gray-700 dark:bg-gray-800">
           <button
             onClick={() => setActiveTab('generated')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 font-semibold transition-colors border-b-2 text-sm sm:text-base touch-manipulation ${
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold transition-colors touch-manipulation ${
               activeTab === 'generated'
                 ? 'border-njit-red text-njit-red dark:text-red-400'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <Calendar size={16} />
-            <span className="hidden xs:inline sm:inline">Generated </span>Schedules
+            Schedules
             {schedules.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
                 {schedules.length}
@@ -223,14 +284,14 @@ export function ScheduleBuilder() {
           </button>
           <button
             onClick={() => setActiveTab('bookmarks')}
-            className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 sm:py-3 font-semibold transition-colors border-b-2 text-sm sm:text-base touch-manipulation ${
+            className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold transition-colors touch-manipulation ${
               activeTab === 'bookmarks'
                 ? 'border-njit-red text-njit-red dark:text-red-400'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
             <Bookmark size={16} />
-            Bookmarks
+            Saved
             {bookmarkedSchedules.length > 0 && (
               <span className="ml-1 px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
                 {bookmarkedSchedules.length}
@@ -239,47 +300,32 @@ export function ScheduleBuilder() {
           </button>
         </div>
 
-        {/* Tab Content */}
-        {activeTab === 'generated' ? (
-          schedules.length > 0 ? (
-            <>
-              <ScheduleView />
-              <ScheduleList />
-            </>
+        <div className="workspace-scrollbar min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
+          {activeTab === 'generated' ? (
+            schedules.length > 0 ? (
+              <>
+                <ScheduleView />
+                <ScheduleList />
+              </>
+            ) : (
+              <EmptyState
+                icon={Calendar}
+                title="No schedules yet"
+                description="Add at least one course, then choose Show schedules."
+              />
+            )
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 sm:p-12 text-center">
-              <div className="text-gray-400 dark:text-gray-500">
-                <svg
-                  className="mx-auto h-16 w-16 sm:h-24 sm:w-24 mb-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <p className="text-xl font-semibold mb-2">No Schedules Yet</p>
-                <p className="text-sm">
-                  Select your courses and constraints, then generate schedules to see them here.
-                </p>
-              </div>
-            </div>
-          )
-        ) : (
-          <>
-            {selectedBookmark && <ScheduleView schedule={selectedBookmark.schedule} />}
-            <BookmarkedSchedules
-              onSelectBookmark={(schedule, index) =>
-                setSelectedBookmark({ schedule, index })
-              }
-              selectedBookmarkIndex={selectedBookmark?.index}
-            />
-          </>
-        )}
+            <>
+              {selectedBookmark && <ScheduleView schedule={selectedBookmark.schedule} />}
+              <BookmarkedSchedules
+                onSelectBookmark={(schedule, index) =>
+                  setSelectedBookmark({ schedule, index })
+                }
+                selectedBookmarkIndex={selectedBookmark?.index}
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

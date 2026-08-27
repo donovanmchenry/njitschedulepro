@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
   swcMinify: true,
   async rewrites() {
@@ -7,7 +8,7 @@ const nextConfig = {
       return [
         {
           source: '/api/:path*',
-          destination: 'http://localhost:8000/:path*',
+          destination: `${process.env.API_PROXY_TARGET || 'http://localhost:8000'}/:path*`,
         },
       ];
     }

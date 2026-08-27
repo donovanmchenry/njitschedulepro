@@ -4,6 +4,13 @@ import { useState, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
 import { X } from 'lucide-react';
+import { fieldControlClass, iconButtonClass, secondaryButtonClass } from '@/lib/uiStyles';
+import {
+  courseMatchesRequirement,
+  formatRequirementLabel,
+  getCourseKeyParts,
+  parseElectiveRequirement,
+} from '@/lib/courseRequirement';
 
 interface RmpRating {
   avg_rating: number;
@@ -16,9 +23,12 @@ export function CourseSelector() {
   const {
     courses,
     selectedCourseKeys,
+    courseChoiceGroups,
     requiredCRNs,
     addCourse,
+    addCourseChoiceGroup,
     removeCourse,
+    removeCourseChoiceGroup,
     addRequiredCRN,
     removeRequiredCRN,
   } = useAppStore();
@@ -43,7 +53,7 @@ export function CourseSelector() {
       .then((r) => (r.ok ? r.json() : {}))
       .then((data) => setRmpRatings((prev) => ({ ...prev, ...data })))
       .catch(() => {});
-  }, [showingSectionsFor]);
+  }, [courses, showingSectionsFor]);
 
   // Check if search term looks like a CRN (5 digits)
   const looksLikeCRN = /^\d{4,6}$/.test(searchTerm.trim());
@@ -51,13 +61,67 @@ export function CourseSelector() {
   // Normalize: lowercase + strip all spaces so "cs114", "CS 114", "Cs114" all match
   const normalizeQuery = (s: string) => s.toLowerCase().replace(/\s+/g, '');
   const normalizedSearch = normalizeQuery(searchTerm);
+  const electiveRequirement = parseElectiveRequirement(searchTerm);
 
-  const filteredCourses = courses.filter(
-    (course) =>
-      (normalizeQuery(course.course_key).includes(normalizedSearch) ||
-        course.title.toLowerCase().includes(searchTerm.toLowerCase().trim())) &&
-      !selectedCourseKeys.includes(course.course_key)
-  );
+  const filteredCourses = courses
+    .filter((course) => {
+      if (selectedCourseKeys.includes(course.course_key)) return false;
+      if (electiveRequirement) {
+        return courseMatchesRequirement(course.course_key, electiveRequirement);
+      }
+      return (
+        normalizeQuery(course.course_key).includes(normalizedSearch) ||
+        course.title.toLowerCase().includes(searchTerm.toLowerCase().trim())
+      );
+    })
+    .sort((left, right) => {
+      if (!electiveRequirement) return 0;
+      const leftParts = getCourseKeyParts(left.course_key);
+      const rightParts = getCourseKeyParts(right.course_key);
+      if (!leftParts || !rightParts) return left.course_key.localeCompare(right.course_key);
+      const departmentDifference =
+        electiveRequirement.departments.indexOf(leftParts.department) -
+        electiveRequirement.departments.indexOf(rightParts.department);
+      return departmentDifference || leftParts.number - rightParts.number;
+    });
+
+  const matchingRequirementCount = electiveRequirement
+    ? courses.filter(
+        (course) =>
+          !selectedCourseKeys.includes(course.course_key) &&
+          courseMatchesRequirement(course.course_key, electiveRequirement)
+      ).length
+    : 0;
+  const selectedRequirementCount = electiveRequirement
+    ? selectedCourseKeys.filter((courseKey) =>
+        courseMatchesRequirement(courseKey, electiveRequirement)
+      ).length
+    : 0;
+
+  const handleAddRequirement = () => {
+    if (!electiveRequirement) return;
+    const matchingCourses = courses.filter(
+      (course) =>
+        !selectedCourseKeys.includes(course.course_key) &&
+        courseMatchesRequirement(course.course_key, electiveRequirement)
+    );
+    const choose = electiveRequirement.courseCount ?? 1;
+    addCourseChoiceGroup({
+      id: `manual-${electiveRequirement.departments.join('-').toLowerCase()}-${electiveRequirement.minimumLevel}-${choose}`,
+      label: formatRequirementLabel({ ...electiveRequirement, courseCount: choose }),
+      eligible_course_keys: matchingCourses.map((course) => course.course_key),
+      choose,
+      total_course_count: matchingCourses.length,
+      open_course_count: matchingCourses.filter((course) =>
+        course.sections.some((section) => section.status === 'Open')
+      ).length,
+      departments: electiveRequirement.departments,
+      minimum_level: electiveRequirement.minimumLevel,
+      source_text: searchTerm,
+    });
+    setSearchTerm('');
+    setShowDropdown(false);
+  };
 
   const handleSelectCourse = (courseKey: string) => {
     // Show sections for this course
@@ -66,8 +130,10 @@ export function CourseSelector() {
 
   const handleSelectAnyCourse = (courseKey: string) => {
     addCourse(courseKey);
-    setSearchTerm('');
-    setShowDropdown(false);
+    if (!electiveRequirement) {
+      setSearchTerm('');
+      setShowDropdown(false);
+    }
     setShowingSectionsFor(null);
   };
 
@@ -77,8 +143,10 @@ export function CourseSelector() {
     if (!selectedCourseKeys.includes(courseKey)) {
       addCourse(courseKey);
     }
-    setSearchTerm('');
-    setShowDropdown(false);
+    if (!electiveRequirement) {
+      setSearchTerm('');
+      setShowDropdown(false);
+    }
     setShowingSectionsFor(null);
   };
 
@@ -97,7 +165,7 @@ export function CourseSelector() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Unified Search/CRN Input */}
       <div className="relative">
         <input
@@ -105,6 +173,7 @@ export function CourseSelector() {
           value={searchTerm}
           onChange={(e) => {
             setSearchTerm(e.target.value);
+            setShowingSectionsFor(null);
             setShowDropdown(true);
           }}
           onFocus={() => setShowDropdown(true)}
@@ -113,46 +182,80 @@ export function CourseSelector() {
               handleSearch();
             }
           }}
-          placeholder="Search courses (e.g., CS 100) or enter CRN..."
-          className="w-full px-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search courses, CRNs, or requirements..."
+          className={`w-full px-3 py-2 text-sm ${fieldControlClass}`}
         />
 
         {/* Dropdown */}
         {showDropdown && (
           <>
             {/* Course search results */}
-            {!showingSectionsFor && searchTerm && (looksLikeCRN || filteredCourses.length > 0) && (
-              <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 sm:max-h-96 overflow-y-auto">
+            {!showingSectionsFor && searchTerm && (looksLikeCRN || electiveRequirement || filteredCourses.length > 0) && (
+              <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-700 sm:max-h-96">
+                {electiveRequirement && (
+                  <div className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-600 dark:bg-gray-800">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {formatRequirementLabel(electiveRequirement)}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {matchingRequirementCount} matching {matchingRequirementCount === 1 ? 'course' : 'courses'}
+                          {electiveRequirement.courseCount
+                            ? ` · ${selectedRequirementCount} of ${electiveRequirement.courseCount} selected`
+                            : ''}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleAddRequirement}
+                        disabled={matchingRequirementCount < (electiveRequirement.courseCount ?? 1)}
+                        className={`shrink-0 px-2 py-1 text-xs ${secondaryButtonClass}`}
+                      >
+                        Add requirement
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* CRN option if input looks like a CRN */}
                 {looksLikeCRN && !requiredCRNs.includes(searchTerm.trim()) && (
                   <button
                     onClick={() => handleAddCRN(searchTerm)}
-                    className="w-full px-4 py-2 text-left hover:bg-green-50 dark:hover:bg-green-900/20 border-b dark:border-gray-600 bg-green-50/50 dark:bg-green-900/10"
+                    className="w-full border-b border-gray-200 bg-gray-50 px-3 py-2 text-left transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
-                    <div className="font-semibold text-sm text-green-700 dark:text-green-400 flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
                       <span className="font-mono">{searchTerm}</span>
-                      <span className="text-xs bg-green-200 dark:bg-green-800 px-2 py-0.5 rounded">
+                      <span className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] text-gray-600 dark:border-gray-600 dark:text-gray-300">
                         Add as CRN
                       </span>
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      Add this specific section to your schedule
+                      Require this section
                     </div>
                   </button>
                 )}
 
                 {/* Course results */}
-                {filteredCourses.slice(0, 20).map((course) => (
+                {(electiveRequirement ? filteredCourses : filteredCourses.slice(0, 20)).map((course) => (
                   <button
                     key={course.course_key}
                     onClick={() => handleSelectCourse(course.course_key)}
-                    className="w-full px-4 py-2 text-left hover:bg-blue-50 dark:hover:bg-gray-600 border-b dark:border-gray-600 last:border-b-0"
+                    className="w-full border-b border-gray-200 px-3 py-2 text-left transition-colors last:border-b-0 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-600"
                   >
                     <div className="font-semibold text-sm dark:text-white">{course.course_key}</div>
                     <div className="text-xs text-gray-600 dark:text-gray-300 truncate">{course.title}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{course.sections.length} sections available</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {course.sections.length} {course.sections.length === 1 ? 'section' : 'sections'} available
+                    </div>
                   </button>
                 ))}
+
+                {electiveRequirement && filteredCourses.length === 0 && (
+                  <div className="px-3 py-4 text-center text-xs text-gray-500 dark:text-gray-400">
+                    No additional matching courses
+                  </div>
+                )}
               </div>
             )}
 
@@ -162,9 +265,9 @@ export function CourseSelector() {
               if (!course) return null;
 
               return (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-64 sm:max-h-96 overflow-y-auto">
+                <div className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-sm dark:border-gray-600 dark:bg-gray-700 sm:max-h-96">
                   {/* Header with back button */}
-                  <div className="sticky top-0 bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-600 px-4 py-2">
+                  <div className="sticky top-0 border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-600 dark:bg-gray-800">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="font-semibold text-sm dark:text-white">{course.course_key}</div>
@@ -172,7 +275,7 @@ export function CourseSelector() {
                       </div>
                       <button
                         onClick={() => setShowingSectionsFor(null)}
-                        className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        className={`px-2 py-1 text-xs ${secondaryButtonClass}`}
                       >
                         ← Back
                       </button>
@@ -182,13 +285,13 @@ export function CourseSelector() {
                   {/* Any section option */}
                   <button
                     onClick={() => handleSelectAnyCourse(course.course_key)}
-                    className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-gray-600 border-b dark:border-gray-600 bg-blue-50/30 dark:bg-blue-900/10"
+                    className="w-full border-b border-gray-200 bg-gray-50 px-3 py-2 text-left transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
-                    <div className="font-semibold text-sm text-blue-700 dark:text-blue-400">
-                      Any Section
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                      Any section
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      Let the scheduler pick the best section
+                      Use any section that fits
                     </div>
                   </button>
 
@@ -200,10 +303,10 @@ export function CourseSelector() {
                         key={section.crn}
                         onClick={() => handleSelectSection(section.crn, course.course_key)}
                         disabled={isAlreadySelected}
-                        className={`w-full px-4 py-3 sm:py-2 text-left border-b dark:border-gray-600 last:border-b-0 ${
+                        className={`w-full border-b border-gray-200 px-3 py-3 text-left last:border-b-0 dark:border-gray-600 sm:py-2 ${
                           isAlreadySelected
                             ? 'bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
-                            : 'hover:bg-gray-50 dark:hover:bg-gray-650'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-600'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -239,7 +342,7 @@ export function CourseSelector() {
                           </div>
                           <div className="flex-shrink-0">
                             <span
-                              className={`text-xs px-2 py-0.5 rounded ${
+                              className={`rounded-md px-2 py-0.5 text-xs ${
                                 section.status === 'Open'
                                   ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
                                   : section.status === 'Waitlist'
@@ -268,16 +371,18 @@ export function CourseSelector() {
 
       {/* Required CRNs display */}
       {requiredCRNs.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1">
           {requiredCRNs.map((crn) => (
             <div
               key={crn}
-              className="flex items-center gap-1 bg-green-100 dark:bg-green-900/40 px-2 py-1 rounded text-sm border border-green-200 dark:border-green-700"
+              className="flex items-center gap-1 rounded-md border border-gray-300 bg-gray-50 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-800"
             >
-              <span className="font-mono text-green-800 dark:text-green-200">CRN: {crn}</span>
+              <span className="font-mono text-gray-700 dark:text-gray-300">CRN: {crn}</span>
               <button
+                type="button"
                 onClick={() => removeRequiredCRN(crn)}
-                className="text-red-600 hover:text-red-800 dark:text-red-400"
+                className="rounded text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                aria-label={`Remove CRN ${crn}`}
               >
                 <X size={14} />
               </button>
@@ -287,11 +392,37 @@ export function CourseSelector() {
       )}
 
       {/* Selected courses */}
-      <div className="space-y-2">
-        {selectedCourseKeys.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 italic">No courses selected</p>
+      <div className="space-y-1">
+        {selectedCourseKeys.length === 0 && courseChoiceGroups.length === 0 ? (
+          <p className="text-xs italic text-gray-500 dark:text-gray-400">No courses selected</p>
         ) : (
-          selectedCourseKeys.map((courseKey) => {
+          <>
+          {courseChoiceGroups.map((group) => (
+            <div
+              key={group.id}
+              className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {group.label}
+                  </div>
+                  <div className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {group.open_course_count} open · {group.total_course_count} offered
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeCourseChoiceGroup(group.id)}
+                  className={iconButtonClass}
+                  aria-label={`Remove ${group.label}`}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+          ))}
+          {selectedCourseKeys.map((courseKey) => {
             const course = courses.find((c) => c.course_key === courseKey);
             // Get CRNs that belong to this course
             const courseCRNs = course?.sections
@@ -301,30 +432,33 @@ export function CourseSelector() {
             return (
               <div
                 key={courseKey}
-                className="bg-blue-100 dark:bg-blue-900/40 rounded-lg border border-blue-200 dark:border-blue-700"
+                className="rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800"
               >
                 <div className="flex items-center justify-between px-3 py-2">
                   <div className="flex-1">
-                    <div className="font-semibold text-sm dark:text-blue-100">{courseKey}</div>
-                    <div className="text-xs text-gray-600 dark:text-blue-200">
+                    <div className="text-sm font-semibold text-gray-900 dark:text-white">{courseKey}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-300">
                       {course?.title || ''}
                     </div>
                     {courseCRNs.length > 0 && (
-                      <div className="text-xs text-green-600 dark:text-green-400 mt-1">
-                        {courseCRNs.length} specific section(s) selected
+                      <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {courseCRNs.length} specific {courseCRNs.length === 1 ? 'section' : 'sections'}
                       </div>
                     )}
                   </div>
                   <button
+                    type="button"
                     onClick={() => removeCourse(courseKey)}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-1"
+                    className={iconButtonClass}
+                    aria-label={`Remove ${courseKey}`}
                   >
                     <X size={18} />
                   </button>
                 </div>
               </div>
             );
-          })
+          })}
+          </>
         )}
       </div>
     </div>
