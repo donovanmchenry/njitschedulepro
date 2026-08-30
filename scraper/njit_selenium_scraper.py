@@ -27,6 +27,7 @@ class NJITSeleniumScraper:
     """Browser automation scraper for NJIT course schedules."""
 
     URL = "https://generalssb-prod.ec.njit.edu/BannerExtensibility/customPage/page/stuRegCrseSched"
+    MAX_CONSECUTIVE_SUBJECT_FAILURES = 3
 
     def __init__(self, download_dir: str = None, headless: bool = False):
         """
@@ -52,6 +53,7 @@ class NJITSeleniumScraper:
             "download.default_directory": str(self.download_dir),
             "download.prompt_for_download": False,
             "download.directory_upgrade": True,
+            "profile.default_content_setting_values.automatic_downloads": 1,
             "safebrowsing.enabled": True
         }
         self.options.add_experimental_option("prefs", prefs)
@@ -69,6 +71,14 @@ class NJITSeleniumScraper:
         """Initialize and start the Chrome driver."""
         try:
             self.driver = webdriver.Chrome(options=self.options)
+            self.driver.execute_cdp_cmd(
+                "Browser.setDownloadBehavior",
+                {
+                    "behavior": "allow",
+                    "downloadPath": str(self.download_dir),
+                    "eventsEnabled": True,
+                },
+            )
             self.driver.set_page_load_timeout(120)  # Increased to 120 seconds
             logger.info("Chrome driver started successfully")
         except Exception as e:
@@ -220,8 +230,10 @@ class NJITSeleniumScraper:
             logger.warning("Timeout waiting for sections to load")
 
     def download_excel(self):
-        """Click the 'Export as Excel' button to download CSV."""
+        """Click the export button and return the new completed CSV path."""
         try:
+            previous_files = {path.name for path in self.download_dir.glob("*.csv")}
+
             # Find and click the export button
             export_button = WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.ID, "pbid-courseListSectionExportToExcel"))
@@ -229,30 +241,50 @@ class NJITSeleniumScraper:
 
             export_button.click()
             logger.info("Clicked 'Export as Excel' button")
-            time.sleep(2)  # Wait for download to start
+            return self.wait_for_download(previous_files=previous_files)
 
         except Exception as e:
-            logger.error(f"Failed to click export button: {e}")
+            logger.error(f"Export/download failed: {e}")
             raise
 
-    def wait_for_download(self, timeout: int = 30):
+    def wait_for_download(
+        self,
+        previous_files: set[str] = None,
+        timeout: int = 30,
+        poll_interval: float = 0.25,
+    ) -> Path:
         """
         Wait for a download to complete.
 
         Args:
+            previous_files: CSV filenames present before the export click
             timeout: Maximum seconds to wait
+            poll_interval: Seconds between filesystem checks
+
+        Returns:
+            Path to the newly downloaded, non-empty CSV.
+
+        Raises:
+            TimeoutException: If no new completed CSV appears before timeout.
         """
+        previous_files = previous_files or set()
         start_time = time.time()
         while time.time() - start_time < timeout:
-            # Check if any .crdownload files exist (Chrome incomplete downloads)
             incomplete = list(self.download_dir.glob("*.crdownload"))
-            if not incomplete:
-                time.sleep(0.5)
-                return True
-            time.sleep(0.5)
+            completed = [
+                path
+                for path in self.download_dir.glob("*.csv")
+                if path.name not in previous_files and path.stat().st_size > 0
+            ]
+            if completed and not incomplete:
+                downloaded = max(completed, key=lambda path: path.stat().st_mtime_ns)
+                logger.info(f"Download completed: {downloaded.name}")
+                return downloaded
+            time.sleep(poll_interval)
 
-        logger.warning("Download may not have completed")
-        return False
+        raise TimeoutException(
+            f"No new CSV appeared in {self.download_dir} within {timeout} seconds"
+        )
 
     def _restart_browser(self, term: str = None):
         """Helper method to restart the browser session."""
@@ -333,11 +365,8 @@ class NJITSeleniumScraper:
                         # Wait for sections to load
                         self.wait_for_sections_to_load()
 
-                        # Download Excel/CSV
+                        # Download Excel/CSV and verify a new file appeared
                         self.download_excel()
-
-                        # Wait for download to complete
-                        self.wait_for_download()
 
                         successful += 1
                         subjects_since_restart += 1
@@ -418,6 +447,7 @@ class NJITSeleniumScraper:
             successful = 0
             failed = []
             subjects_since_restart = 0
+            consecutive_failures = 0
 
             logger.info(f"[Worker] Starting chunk of {total} subjects...")
 
@@ -441,9 +471,9 @@ class NJITSeleniumScraper:
                             break
                         self.wait_for_sections_to_load()
                         self.download_excel()
-                        self.wait_for_download()
                         successful += 1
                         subjects_since_restart += 1
+                        consecutive_failures = 0
                         subject_success = True
                         logger.info(f"[Worker] Downloaded {subject}")
                     except Exception as e:
@@ -466,7 +496,14 @@ class NJITSeleniumScraper:
 
                 if not subject_success:
                     failed.append(subject)
+                    consecutive_failures += 1
                     subjects_since_restart += 1
+                    if consecutive_failures >= self.MAX_CONSECUTIVE_SUBJECT_FAILURES:
+                        logger.error(
+                            "[Worker] Aborting after "
+                            f"{consecutive_failures} consecutive subjects failed to download"
+                        )
+                        break
 
                 if i < total:
                     time.sleep(delay)
@@ -496,7 +533,6 @@ class NJITSeleniumScraper:
             if self.click_subject(subject):
                 self.wait_for_sections_to_load()
                 self.download_excel()
-                self.wait_for_download()
                 logger.info(f"Successfully downloaded {subject}")
             else:
                 logger.error(f"Failed to find subject: {subject}")

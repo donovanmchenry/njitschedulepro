@@ -162,6 +162,14 @@ class ScheduleUpdater:
                 logger.error("No CSV files were produced by any worker!")
                 return False
 
+            if merged != len(subjects):
+                logger.error(
+                    "Incomplete scrape: expected one CSV for each of "
+                    f"{len(subjects)} subjects, but received {merged}. "
+                    "The existing catalog will not be replaced."
+                )
+                return False
+
             logger.info(f"Merged {merged} CSV files into {self.scrape_dir}")
             return True
 
