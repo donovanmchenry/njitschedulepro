@@ -50,7 +50,14 @@ jobs:
         working-directory: ./scraper
         run: |
           echo "Starting scraper..."
-          python auto_update_scheduler.py --scrape-dir data/temp_scrape --catalog-dir ../courseschedules --workers 5
+          for attempt in 1 2; do
+            python auto_update_scheduler.py --scrape-dir data/temp_scrape --catalog-dir ../courseschedules --workers 3 && exit 0
+            if [ "$attempt" -lt 2 ]; then
+              echo "Scrape attempt $attempt failed; retrying with fresh browsers in 60 seconds..."
+              sleep 60
+            fi
+          done
+          exit 1
 
       - name: Build frontend catalog assets
         run: python scripts/build_catalog_assets.py

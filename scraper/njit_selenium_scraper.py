@@ -29,6 +29,22 @@ class NJITSeleniumScraper:
     URL = "https://generalssb-prod.ec.njit.edu/BannerExtensibility/customPage/page/stuRegCrseSched"
     MAX_CONSECUTIVE_SUBJECT_FAILURES = 3
 
+    @staticmethod
+    def _is_session_error(error: Exception) -> bool:
+        """Return whether Selenium lost the browser or DevTools session."""
+        message = str(error).lower()
+        return any(
+            marker in message
+            for marker in (
+                "invalid session",
+                "session deleted",
+                "disconnected",
+                "not connected to devtools",
+                "chrome not reachable",
+                "no such window",
+            )
+        )
+
     def __init__(self, download_dir: str = None, headless: bool = False):
         """
         Initialize the scraper.
@@ -216,6 +232,8 @@ class NJITSeleniumScraper:
 
         except Exception as e:
             logger.error(f"Failed to click subject {subject_text}: {e}")
+            if self._is_session_error(e):
+                raise
             return False
 
     def wait_for_sections_to_load(self):
@@ -341,7 +359,7 @@ class NJITSeleniumScraper:
                 logger.info(f"Processing {i}/{total}: {subject}")
 
                 # Check if we need to do a scheduled restart
-                if subjects_since_restart >= restart_interval and i < total:
+                if restart_interval > 0 and subjects_since_restart >= restart_interval and i < total:
                     logger.info(f"{'='*60}")
                     logger.info(f"Scheduled restart after {subjects_since_restart} subjects...")
                     logger.info(f"{'='*60}")
@@ -374,10 +392,8 @@ class NJITSeleniumScraper:
                         logger.info(f"Successfully downloaded {subject}")
 
                     except Exception as e:
-                        error_msg = str(e)
-
                         # Check if it's a session error
-                        if "invalid session" in error_msg.lower() or "session deleted" in error_msg.lower():
+                        if self._is_session_error(e):
                             logger.error(f"Session error detected for {subject}. Browser crashed unexpectedly.")
 
                             # Restart browser immediately
@@ -454,7 +470,7 @@ class NJITSeleniumScraper:
             for i, subject in enumerate(subjects, 1):
                 logger.info(f"[Worker] {i}/{total}: {subject}")
 
-                if subjects_since_restart >= restart_interval and i < total:
+                if restart_interval > 0 and subjects_since_restart >= restart_interval and i < total:
                     logger.info(f"[Worker] Scheduled restart after {subjects_since_restart} subjects...")
                     self._restart_browser(term)
                     subjects_since_restart = 0
@@ -477,8 +493,7 @@ class NJITSeleniumScraper:
                         subject_success = True
                         logger.info(f"[Worker] Downloaded {subject}")
                     except Exception as e:
-                        error_msg = str(e)
-                        if "invalid session" in error_msg.lower() or "session deleted" in error_msg.lower():
+                        if self._is_session_error(e):
                             if self._restart_browser(term):
                                 subjects_since_restart = 0
                                 retry_count += 1

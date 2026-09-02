@@ -31,7 +31,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _worker(subjects: List[str], term: Optional[str], scrape_subdir: str, headless: bool) -> int:
+def _worker(
+    subjects: List[str],
+    term: Optional[str],
+    scrape_subdir: str,
+    headless: bool,
+    restart_interval: int,
+) -> int:
     """
     Top-level worker function (must be module-level for multiprocessing pickling).
     Runs a Selenium scraper for a chunk of subjects and returns the CSV count.
@@ -42,12 +48,20 @@ def _worker(subjects: List[str], term: Optional[str], scrape_subdir: str, headle
 
     Path(scrape_subdir).mkdir(parents=True, exist_ok=True)
     scraper = NJITSeleniumScraper(download_dir=scrape_subdir, headless=headless)
-    scraper.scrape_subject_list(subjects=subjects, term=term, delay=1.0, restart_interval=25)
+    scraper.scrape_subject_list(
+        subjects=subjects,
+        term=term,
+        delay=1.0,
+        restart_interval=restart_interval,
+    )
     return len(list(Path(scrape_subdir).glob("*.csv")))
 
 
 class ScheduleUpdater:
     """Automated course schedule updater with parallel browser support."""
+
+    MAX_RECOVERY_SUBJECTS = 20
+    RECOVERY_COOLDOWN_SECONDS = 20
 
     def __init__(
         self,
@@ -98,6 +112,56 @@ class ScheduleUpdater:
         finally:
             scraper.stop_driver()
 
+    @staticmethod
+    def _subject_code_from_csv(csv_file: Path) -> Optional[str]:
+        """Extract the subject code from an NJIT schedule export filename."""
+        parts = csv_file.stem.split("_")
+        if len(parts) < 5 or parts[:2] != ["Course", "Schedule"]:
+            return None
+        return parts[3]
+
+    def _missing_subjects(self, subjects: List[str]) -> List[str]:
+        downloaded = {
+            code
+            for csv_file in self.scrape_dir.glob("*.csv")
+            if (code := self._subject_code_from_csv(csv_file)) is not None
+        }
+        return [subject for subject in subjects if subject not in downloaded]
+
+    def _recover_missing_subjects(
+        self,
+        subjects: List[str],
+        term: Optional[str],
+    ) -> None:
+        """Retry a small number of missed exports with one fresh browser."""
+        if not subjects:
+            return
+
+        logger.warning(
+            f"Retrying {len(subjects)} missed subjects sequentially after "
+            f"a {self.RECOVERY_COOLDOWN_SECONDS}-second cooldown: "
+            f"{', '.join(subjects)}"
+        )
+        time.sleep(self.RECOVERY_COOLDOWN_SECONDS)
+
+        recovery_dir = self.scrape_dir / "recovery"
+        shutil.rmtree(recovery_dir, ignore_errors=True)
+        recovery_dir.mkdir(parents=True, exist_ok=True)
+
+        scraper = NJITSeleniumScraper(
+            download_dir=str(recovery_dir),
+            headless=self.headless,
+        )
+        scraper.scrape_subject_list(
+            subjects=subjects,
+            term=term,
+            delay=3.0,
+            restart_interval=0,
+        )
+
+        for csv_file in recovery_dir.glob("*.csv"):
+            shutil.move(str(csv_file), str(self.scrape_dir / csv_file.name))
+
     def scrape_latest_data(self, term: Optional[str] = None) -> bool:
         """
         Run parallel Selenium workers to scrape all subjects concurrently.
@@ -121,6 +185,7 @@ class ScheduleUpdater:
                     f.unlink()
                 for d in self.scrape_dir.glob("worker_*"):
                     shutil.rmtree(d, ignore_errors=True)
+                shutil.rmtree(self.scrape_dir / "recovery", ignore_errors=True)
 
             # Step 1: Get subject list
             subjects = self._get_all_subjects(term)
@@ -137,10 +202,19 @@ class ScheduleUpdater:
 
             # Step 3: Run workers in parallel
             subdirs = [str(self.scrape_dir / f"worker_{i}") for i in range(self.workers)]
+            # Keep browser sessions bounded without restarting every worker at once.
+            restart_intervals = [20 + (4 * i) for i in range(self.workers)]
 
             with ProcessPoolExecutor(max_workers=self.workers) as executor:
                 futures = {
-                    executor.submit(_worker, chunk, term, subdir, self.headless): i
+                    executor.submit(
+                        _worker,
+                        chunk,
+                        term,
+                        subdir,
+                        self.headless,
+                        restart_intervals[i],
+                    ): i
                     for i, (chunk, subdir) in enumerate(zip(chunks, subdirs))
                 }
                 for future in as_completed(futures):
@@ -162,15 +236,22 @@ class ScheduleUpdater:
                 logger.error("No CSV files were produced by any worker!")
                 return False
 
-            if merged != len(subjects):
+            missing = self._missing_subjects(subjects)
+            if 0 < len(missing) <= self.MAX_RECOVERY_SUBJECTS:
+                self._recover_missing_subjects(missing, term)
+                missing = self._missing_subjects(subjects)
+
+            if missing:
                 logger.error(
-                    "Incomplete scrape: expected one CSV for each of "
-                    f"{len(subjects)} subjects, but received {merged}. "
+                    "Incomplete scrape: missing "
+                    f"{len(missing)} of {len(subjects)} subjects: "
+                    f"{', '.join(missing)}. "
                     "The existing catalog will not be replaced."
                 )
                 return False
 
-            logger.info(f"Merged {merged} CSV files into {self.scrape_dir}")
+            final_count = len(list(self.scrape_dir.glob("*.csv")))
+            logger.info(f"Merged {final_count} CSV files into {self.scrape_dir}")
             return True
 
         except Exception as e:
