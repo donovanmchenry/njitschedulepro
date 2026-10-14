@@ -4,12 +4,20 @@ import './globals.css';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { siteUrl } from '@/lib/site';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'NJIT Schedule Pro',
-  description: 'Production-ready course schedule generator for NJIT',
+  metadataBase: new URL(siteUrl),
+  title: 'NJIT Schedule Builder & Course Planner | NJIT Schedule Pro',
+  description: 'Generate conflict-free NJIT class schedules, avoid unavailable times, compare course sections, and export your schedule to your calendar.',
+  openGraph: {
+    siteName: 'NJIT Schedule Pro',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: { card: 'summary_large_image' },
   icons: {
     icon: '/scheduleproicon.png',
   },

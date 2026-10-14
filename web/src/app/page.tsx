@@ -1,93 +1,60 @@
-'use client';
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import ScheduleHome from '@/components/ScheduleHome';
+import { guides, schedulingFaqs } from '@/lib/guides';
+import { canonicalUrl } from '@/lib/site';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { ScheduleBuilder } from '@/components/ScheduleBuilder';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { Notice } from '@/components/Notice';
-import { useAppStore } from '@/lib/store';
-import { apiUrl } from '@/lib/api';
-import { loadCatalogIndex } from '@/lib/catalog';
-import { Loader2 } from 'lucide-react';
+export const metadata: Metadata = {
+  alternates: { canonical: canonicalUrl('/') },
+  openGraph: { siteName: 'NJIT Schedule Pro', type: 'website', locale: 'en_US', url: canonicalUrl('/') },
+};
+
+const application = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'NJIT Schedule Pro',
+  url: canonicalUrl('/'),
+  applicationCategory: 'EducationalApplication',
+  operatingSystem: 'Web browser',
+  description: 'An independent NJIT course schedule builder that generates conflict-free schedules using selected courses, unavailable times, and filters.',
+  creator: { '@type': 'Person', name: 'Donovan McHenry' },
+  featureList: ['Conflict-free schedule generation', 'Unavailable time blocks', 'Course section filters', 'Schedule bookmarks', 'ICS and CSV export'],
+};
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    application,
+    { '@type': 'WebSite', name: 'NJIT Schedule Pro', alternateName: 'NJIT SchedulePro', url: canonicalUrl('/') },
+  ],
+};
 
 export default function Home() {
-  const { setCourses, setSchedules } = useAppStore();
-  const [catalogState, setCatalogState] = useState<'loading' | 'ready' | 'error'>('loading');
-
-  useEffect(() => {
-    const loadCourses = async () => {
-      setCatalogState('loading');
-      try {
-        performance.mark('catalog-load-start');
-        const data = await loadCatalogIndex();
-        setCourses(data.courses || []);
-        setCatalogState('ready');
-        performance.mark('catalog-ready');
-        performance.measure('catalog-load', 'catalog-load-start', 'catalog-ready');
-      } catch (error) {
-        console.error('Failed to load courses:', error);
-        setCatalogState('error');
-      }
-    };
-
-    loadCourses();
-  }, [setCourses]);
-
-  // Load a shared schedule if ?share= is present in the URL
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const shareId = params.get('share');
-    if (!shareId) return;
-
-    fetch(apiUrl(`/share/${shareId}`))
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) {
-          setSchedules([data]);
-          // Remove the param from the address bar without reloading
-          const url = new URL(window.location.href);
-          url.searchParams.delete('share');
-          window.history.replaceState({}, '', url.toString());
-        }
-      })
-      .catch(() => {});
-  }, [setSchedules]);
-
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[#f4f6fb] text-gray-950 dark:bg-gray-950 dark:text-white lg:flex lg:h-screen lg:flex-col lg:overflow-hidden">
-      <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white pl-5 pr-3 dark:border-gray-700 dark:bg-gray-900">
-          <div className="flex min-w-0 items-center">
-            <Image
-              src="/scheduleprologo.png"
-              alt="NJIT Schedule Pro"
-              width={612}
-              height={408}
-              sizes="60px"
-              className="h-10 w-auto shrink-0"
-              priority
-            />
-            <h1 className="sr-only">NJIT Schedule Pro</h1>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
+      <ScheduleHome />
+      <section aria-labelledby="about-builder" className="border-t border-gray-200 bg-white px-6 py-12 text-gray-900 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-100">
+        <div className="mx-auto max-w-4xl space-y-8">
+          <div>
+            <h1 id="about-builder" className="text-2xl font-bold">NJIT Schedule Builder &amp; Course Planner</h1>
+            <p className="mt-3 leading-relaxed">NJIT Schedule Pro helps New Jersey Institute of Technology students generate conflict-free class schedules. Choose courses, block work or commuting hours, compare section combinations, and export your plan to your calendar.</p>
           </div>
-          <ThemeToggle />
-      </header>
-
-      {catalogState !== 'ready' && (
-          <Notice
-            tone={catalogState === 'error' ? 'error' : 'info'}
-            icon={catalogState === 'loading' ? Loader2 : undefined}
-            iconClassName={catalogState === 'loading' ? 'animate-spin' : ''}
-            className="shrink-0 rounded-none border-x-0 border-t-0 pl-5 text-sm"
-          >
-            <p>
-              {catalogState === 'loading'
-                ? 'Loading the latest NJIT course catalog…'
-                : 'The course catalog could not be loaded. Check the API configuration and try again.'}
-            </p>
-          </Notice>
-      )}
-      <div className="lg:min-h-0 lg:flex-1">
-        <ScheduleBuilder />
-      </div>
-    </main>
+          <nav id="planning-guides" aria-label="Schedule planning guides">
+            <h2 className="text-xl font-semibold">NJIT schedule planning guides</h2>
+            <ul className="mt-3 space-y-3">
+              {guides.map((guide) => <li key={guide.slug}><Link className="text-blue-700 underline underline-offset-4 dark:text-blue-300" href={`/guides/${guide.slug}`}>{guide.title}</Link></li>)}
+            </ul>
+          </nav>
+          <div>
+            <h2 className="text-xl font-semibold">Frequently asked questions</h2>
+            <dl className="mt-4 space-y-5">
+              {schedulingFaqs.map(([question, answer]) => <div key={question}><dt className="font-semibold">{question}</dt><dd className="mt-1 leading-relaxed">{answer}</dd></div>)}
+            </dl>
+          </div>
+          <p className="text-sm">Confirm section availability and registration details with the <a className="underline" href="https://www.njit.edu/registrar/schedules">NJIT Office of the Registrar</a>.</p>
+        </div>
+      </section>
+    </>
   );
 }
