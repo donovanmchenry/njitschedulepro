@@ -23,6 +23,15 @@ Run `python3 scripts/check_search_visibility.py` after deployment to verify
 HTTP status, canonical links, indexability, structured data, crawler rules,
 and sitemap entries against the public production site.
 
+The homepage publishes the Google Search Console verification tag for the
+production URL-prefix property. Keep it in place to maintain verification.
+
+After deploying new or updated public content, run
+`python3 scripts/submit_indexnow.py` to notify participating search engines of
+the current sitemap URLs. It first checks the deployed ownership file and
+rejects URLs outside the production origin. An accepted notification does not
+guarantee indexing. Do not submit unchanged URLs repeatedly.
+
 `robots.txt` allows public crawlers, including search crawlers used by AI tools,
 and excludes the API path. It is not an access-control mechanism. Private shared
 schedule query URLs are not included in the sitemap; the homepage canonical

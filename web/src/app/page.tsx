@@ -5,6 +5,7 @@ import { guides, schedulingFaqs } from '@/lib/guides';
 import { canonicalUrl } from '@/lib/site';
 
 export const metadata: Metadata = {
+  verification: { google: 'Jr9ymrZXi8IGIBXU9oDGzbhW8UzOtn-w0WnqrEf7DKM' },
   alternates: { canonical: canonicalUrl('/') },
   openGraph: { siteName: 'NJIT Schedule Pro', type: 'website', locale: 'en_US', url: canonicalUrl('/') },
 };

@@ -92,6 +92,7 @@ def check(base_url, expected_origin):
         assert page.meta.get('og:image'), (path, 'missing social image')
         assert 'https://www.njit.edu/registrar/schedules' in page.links, (path, 'official source')
         if path == '/':
+            assert page.meta.get('google-site-verification'), 'missing Search Console verification tag'
             for guide in PATHS[1:]:
                 assert guide in page.links, ('missing guide link', guide)
             graph = page.structured_data[0]['@graph']
