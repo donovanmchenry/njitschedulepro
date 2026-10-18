@@ -59,13 +59,27 @@ jobs:
           done
           exit 1
 
+      # Keep the active classroom semester separate from NJIT's default term.
+      - name: Export Fall 2026 for Room Finder
+        working-directory: ./scraper
+        run: |
+          for attempt in 1 2; do
+            python auto_update_scheduler.py --term 202690 --scrape-dir data/fall_scrape --catalog-dir ../courseschedules/202690 --workers 3 --no-backup && exit 0
+            if [ "$attempt" -lt 2 ]; then
+              echo "Fall scrape attempt $attempt failed; retrying in 60 seconds..."
+              sleep 60
+            fi
+          done
+          exit 1
+
       - name: Build frontend catalog assets
         run: python scripts/build_catalog_assets.py
 
       - name: Check for changes
         id: check_changes
         run: |
-          if git diff --quiet courseschedules/ web/public/catalog/ && git diff --cached --quiet courseschedules/ web/public/catalog/; then
+          git add courseschedules/ web/public/catalog/
+          if git diff --cached --quiet courseschedules/ web/public/catalog/; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
             echo "has_changes=true" >> $GITHUB_OUTPUT
@@ -97,3 +111,4 @@ jobs:
       - name: No changes detected
         if: steps.check_changes.outputs.has_changes == 'false'
         run: echo "No changes to course schedules detected"
+
