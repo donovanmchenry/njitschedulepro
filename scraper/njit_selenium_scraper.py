@@ -158,7 +158,17 @@ class NJITSeleniumScraper:
             term_select = Select(self.driver.find_element(By.ID, "pbid-selectBlockTermSelect"))
 
             if term:
-                term_select.select_by_value(term)
+                # Angular-backed dropdowns expose values such as "string:202690".
+                # Match either that representation or a plain Banner term code.
+                matching_value = next(
+                    (
+                        option.get_attribute("value")
+                        for option in term_select.options
+                        if option.get_attribute("value").split(":")[-1] == term
+                    ),
+                    term,
+                )
+                term_select.select_by_value(matching_value)
                 logger.info(f"Selected term: {term}")
             else:
                 # Use the default selected term
@@ -585,3 +595,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
