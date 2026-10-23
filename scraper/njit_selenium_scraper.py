@@ -160,14 +160,13 @@ class NJITSeleniumScraper:
             if term:
                 # Angular-backed dropdowns expose values such as "string:202690".
                 # Match either that representation or a plain Banner term code.
-                matching_value = next(
-                    (
-                        option.get_attribute("value")
-                        for option in term_select.options
-                        if option.get_attribute("value").split(":")[-1] == term
-                    ),
-                    term,
-                )
+                # The dropdown exists before its asynchronous options arrive.
+                def matching_term(driver):
+                    options = Select(driver.find_element(By.ID, "pbid-selectBlockTermSelect")).options
+                    return next((option.get_attribute('value') for option in options
+                                 if (option.get_attribute('value') or '').split(':')[-1] == term), False)
+
+                matching_value = WebDriverWait(self.driver, 60).until(matching_term)
                 term_select.select_by_value(matching_value)
                 logger.info(f"Selected term: {term} ({term_select.first_selected_option.text})")
             else:
@@ -189,16 +188,13 @@ class NJITSeleniumScraper:
             List of subject code strings
         """
         try:
-            # Wait for subject table to load
-            WebDriverWait(self.driver, 15).until(
-                EC.presence_of_element_located((By.ID, "pbid-subjListTable"))
-            )
+            # A present table may still be empty while Banner loads the term.
+            def loaded_subjects(driver):
+                table = driver.find_element(By.ID, 'pbid-subjListTable')
+                links = table.find_elements(By.CSS_SELECTOR, 'tbody tr td a')
+                return [link.text.strip() for link in links if link.text.strip()] or False
 
-            # Find all subject link elements
-            subject_table = self.driver.find_element(By.ID, "pbid-subjListTable")
-            subject_links = subject_table.find_elements(By.CSS_SELECTOR, "tbody tr td a")
-
-            subjects = [link.text.strip() for link in subject_links if link.text.strip()]
+            subjects = WebDriverWait(self.driver, 90).until(loaded_subjects)
 
             logger.info(f"Found {len(subjects)} subjects")
             return subjects
