@@ -66,12 +66,9 @@ export default function Home() {
               className="h-10 w-auto shrink-0"
               priority
             />
-            <span className="sr-only">NJIT Schedule Pro</span>
+            <h1 className="sr-only">NJIT Schedule Pro</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="#planning-guides" className="text-sm text-blue-700 underline underline-offset-4 dark:text-blue-300">Planning guides</a>
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
       </header>
 
       {catalogState !== 'ready' && (

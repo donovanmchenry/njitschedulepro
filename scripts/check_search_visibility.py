@@ -90,14 +90,14 @@ def check(base_url, expected_origin):
         assert 'noindex' not in directives and 'nosnippet' not in directives, (path, directives)
         assert page.structured_data, (path, 'missing structured data')
         assert page.meta.get('og:image'), (path, 'missing social image')
-        assert 'https://www.njit.edu/registrar/schedules' in page.links, (path, 'official source')
         if path == '/':
             assert page.meta.get('google-site-verification'), 'missing Search Console verification tag'
-            for guide in PATHS[1:]:
-                assert guide in page.links, ('missing guide link', guide)
+            assert 'id="planning-guides"' not in html, 'marketing content should not appear in the builder'
+            assert '#planning-guides' not in page.links, 'builder should not include the removed guide navigation'
             graph = page.structured_data[0]['@graph']
             assert {node['@type'] for node in graph} >= {'WebApplication', 'WebSite'}
         else:
+            assert 'https://www.njit.edu/registrar/schedules' in page.links, (path, 'official source')
             assert '/' in page.links, (path, 'missing builder link')
             assert page.structured_data[0]['@type'] == 'BreadcrumbList'
         image_url = page.meta['og:image']

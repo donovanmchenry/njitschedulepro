@@ -1,8 +1,11 @@
 # Search visibility rollout
 
-The homepage and three static guides explain the builder in crawlable HTML.
-They have distinct titles and descriptions, internal links, and official sources.
-The homepage includes WebApplication structured data describing actual features.
+The homepage keeps the builder UI free of marketing sections and guide links.
+Its title, description, canonical URL, and WebApplication structured data provide
+search metadata without adding visible copy. Three separate static guides have
+distinct titles and descriptions, internal links, and official sources, and are
+discoverable through the sitemap. Do not add hidden keyword or FAQ sections to
+the builder.
 
 ## Production setup
 
