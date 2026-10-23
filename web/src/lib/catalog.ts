@@ -1,6 +1,12 @@
 import { CatalogIndex, SubjectCatalog } from '@/types';
 import { apiUrl } from './api';
 
+export const ACTIVE_TERM = { code: '202710', label: 'Spring 2027' } as const;
+
+function requireActiveTerm(data: CatalogIndex): CatalogIndex {
+  if (data.term !== ACTIVE_TERM.code) throw new Error('The active semester catalog is not available yet');
+  return data;
+}
 
 let catalogVersion = '';
 const subjectRequests = new Map<string, Promise<SubjectCatalog>>();
@@ -12,13 +18,13 @@ async function requireJson<T>(response: Response): Promise<T> {
 
 export async function loadCatalogIndex(): Promise<CatalogIndex> {
   try {
-    const data = await requireJson<CatalogIndex>(
-      await fetch('/catalog/index.json', { cache: 'force-cache' })
-    );
+    const data = requireActiveTerm(await requireJson<CatalogIndex>(
+      await fetch(`/catalog/index.json?term=${ACTIVE_TERM.code}`, { cache: 'no-cache' })
+    ));
     catalogVersion = data.version;
     return data;
   } catch {
-    const data = await requireJson<CatalogIndex>(await fetch(apiUrl('/catalog/courses')));
+    const data = requireActiveTerm(await requireJson<CatalogIndex>(await fetch(apiUrl('/catalog/courses'))));
     catalogVersion = data.version;
     return data;
   }

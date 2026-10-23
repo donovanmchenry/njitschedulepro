@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import gzip
+import io
 import json
 import re
 from collections import defaultdict
@@ -13,6 +15,9 @@ from pathlib import Path
 
 
 def extract_course_key(value: str) -> str:
+    spaced = re.fullmatch(r"([A-Z][A-Z0-9]*)\s+(\d+[A-Z]*)", value.strip().upper())
+    if spaced:
+        return f"{spaced.group(1)} {spaced.group(2)}"
     match = re.match(r"([A-Z]+)\s*(\d+)([A-Z]*)", value.strip().upper())
     if not match:
         return value.strip().upper()
@@ -51,9 +56,14 @@ def optional_float(value: str) -> float | None:
 def build_assets(catalog_dir: Path, output_dir: Path, expected_term: str | None = None) -> tuple[int, int, str]:
     courses: dict[str, dict] = {}
     terms: set[str] = set()
+    export_rows: list[dict] = []
+    export_fields: list[str] = []
     for csv_path in sorted(catalog_dir.glob("*.csv")):
         with csv_path.open(newline="", encoding="utf-8-sig") as handle:
-            for row in csv.DictReader(handle):
+            reader = csv.DictReader(handle)
+            if not export_fields:
+                export_fields = reader.fieldnames or []
+            for row in reader:
                 crn = (row.get("CRN") or "").strip()
                 course_key = extract_course_key(row.get("Course") or "")
                 if not crn or not course_key:
@@ -63,6 +73,7 @@ def build_assets(catalog_dir: Path, output_dir: Path, expected_term: str | None 
                     raise ValueError(f"Expected term {expected_term}, found {term!r} in {csv_path.name}")
                 if term:
                     terms.add(term)
+                export_rows.append(row)
                 course = courses.setdefault(
                     course_key,
                     {
@@ -123,6 +134,11 @@ def build_assets(catalog_dir: Path, output_dir: Path, expected_term: str | None 
         )
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    combined_csv = io.StringIO(newline='')
+    writer = csv.DictWriter(combined_csv, fieldnames=export_fields)
+    writer.writeheader()
+    writer.writerows(export_rows)
+    (output_dir / 'catalog.csv.gz').write_bytes(gzip.compress(combined_csv.getvalue().encode('utf-8'), mtime=0))
     (output_dir / "index.json").write_text(
         json.dumps(
             {"version": version, "term": term, "courses": index_courses, "total": len(index_courses)},

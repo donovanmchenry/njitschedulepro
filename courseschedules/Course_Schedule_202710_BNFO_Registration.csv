@@ -1,0 +1,4 @@
+Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
+202710,BNFO 135,Programming for Bioinformatics,002,10739,TR,8:30 AM - 9:50 AM,KUPF 106,Open,43,0,"Yusuf, Fatima",Face-To-Face,3,,
+202710,BNFO 601,Foundations of Bioinformatics,852,10740,,,,Open,30,0,"Kaur, Ravneet",Online Virtual,3,,
+202710,BNFO 620,Genomic Data Analysis,002,10741,F,1:00 PM - 3:50 PM,CKB 223,Open,30,0,"Wei, Zhi",Face-To-Face,3,,

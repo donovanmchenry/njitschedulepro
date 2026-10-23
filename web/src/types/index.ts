@@ -55,6 +55,7 @@ export interface ScheduleFilters {
 }
 
 export interface SolveRequest {
+  term?: string;
   required_course_keys: string[];
   course_choice_groups?: CourseChoiceGroup[];
   optional_course_keys?: string[];
@@ -150,6 +151,7 @@ export interface Course {
 }
 
 export interface CatalogIndex {
+  term?: string | null;
   version: string;
   courses: Course[];
   total: number;

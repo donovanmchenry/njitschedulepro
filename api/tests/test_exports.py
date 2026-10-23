@@ -2,13 +2,37 @@
 
 import csv
 import io
+from datetime import datetime
 
 import pytest
 from fastapi import HTTPException
+from icalendar import Calendar
 
 from app import main as main_module
 from app.main import _schedule_to_csv, create_share, get_share
 from app.models import DayOfWeek, Meeting, Offering, Schedule
+
+
+@pytest.mark.asyncio
+async def test_spring_2027_export_uses_spring_dates_and_includes_last_class_day():
+    schedule = Schedule(offerings=[Offering(
+        crn='10001', course_key='CS 100', section='001', title='Computing', term='202710',
+        meetings=[Meeting(day=DayOfWeek.MONDAY, start_min=600, end_min=680)],
+    )], total_credits=3, score=0)
+    response = await main_module.export_ics(schedule)
+    event = Calendar.from_ical(response.body).walk('VEVENT')[0]
+    assert event.decoded('dtstart') == datetime(2027, 1, 25, 10, 0)
+    assert event['rrule']['UNTIL'][0] == datetime(2027, 5, 3, 23, 59, 59)
+
+
+@pytest.mark.asyncio
+async def test_export_rejects_mixed_semesters_without_explicit_dates():
+    schedule = Schedule(offerings=[Offering(
+        crn=term, course_key='CS 100', section='001', title='Computing', term=term, meetings=[],
+    ) for term in ['202710', '202690']], total_credits=6, score=0)
+    with pytest.raises(HTTPException) as error:
+        await main_module.export_ics(schedule)
+    assert error.value.status_code == 400
 
 
 def test_csv_preserves_each_meeting_and_njit_day_codes():

@@ -151,6 +151,7 @@ class CourseChoiceGroup(BaseModel):
 class SolveRequest(BaseModel):
     """Request to generate schedules."""
 
+    term: Optional[str] = Field(default=None, pattern=r'^\d{6}$')
     required_course_keys: List[str] = Field(default_factory=list)
     course_choice_groups: List[CourseChoiceGroup] = Field(default_factory=list)
     optional_course_keys: Optional[List[str]] = None

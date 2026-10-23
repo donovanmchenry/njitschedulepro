@@ -1,3 +1,5 @@
-Last Updated: 2026-10-23T08:56:27.927141
-File Count: 13
-Update Method: Parallel Selenium (3 workers)
+Last Updated: 2026-10-23T11:10:42.783145
+Term: 202710
+Sections: 5744
+Subjects: 77
+Update Method: NJIT public registration search API

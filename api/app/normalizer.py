@@ -164,6 +164,11 @@ def extract_course_key(course_str: str) -> str:
     if not course_str:
         return ""
 
+    # Rutgers cross-registration subjects contain digits (for example R120 101).
+    spaced = re.fullmatch(r"([A-Z][A-Z0-9]*)\s+(\d+[A-Z]*)", course_str.strip().upper())
+    if spaced:
+        return f"{spaced.group(1)} {spaced.group(2)}"
+
     # Extract subject code, catalog number, and optional suffix (like A for labs)
     # Patterns: "CS100", "CS 100", "ACCT115", "PHYS111A", etc.
     match = re.match(r"([A-Z]+)\s*(\d+)([A-Z]*)", course_str.strip().upper())

@@ -27,6 +27,7 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from app.ai_parser import AIParseRequest, AIParseResponse, parse_natural_language
+from app.catalog_sync import download_catalog
 from app.ics_export import generate_ics
 from app.models import Offering, Schedule, SolveRequest, SolveResponse
 from app.normalizer import normalize_csv, normalize_multiple_csvs
@@ -43,6 +44,7 @@ from app.shared_rate_limiter import (
     record_ai_tokens,
 )
 from app.solver import build_offering_masks, solve_schedules
+from app.terms import schedule_term_dates
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -53,6 +55,11 @@ async def lifespan(_app: FastAPI):
     """Load the current catalog before serving traffic."""
     global catalog, catalog_metadata
     catalog, catalog_metadata = _load_catalog_from_disk()
+    try:
+        catalog = await download_catalog('main')
+        catalog_metadata = {'loaded_at': datetime.now().isoformat(), 'offering_count': len(catalog), 'source_revision': 'main'}
+    except Exception:
+        logger.exception('Remote catalog refresh failed; using the bundled catalog')
     _rebuild_catalog_indexes()
     yield
 
@@ -178,10 +185,12 @@ def _rebuild_catalog_indexes() -> None:
         )
 
     # Include section-level data so cache keys change when seats, status, or instructors change.
-    digest_source = json.dumps(subjects, sort_keys=True, separators=(",", ":")).encode()
+    terms = sorted({offering.term for offering in catalog if offering.term})
+    digest_source = json.dumps({"terms": terms, "subjects": subjects}, sort_keys=True, separators=(",", ":")).encode()
     version = hashlib.sha256(digest_source).hexdigest()[:16]
     index_payload = {
         "version": version,
+        "term": terms[0] if len(terms) == 1 else None,
         "courses": summaries,
         "total": len(summaries),
     }
@@ -205,6 +214,7 @@ def _rebuild_catalog_indexes() -> None:
     _catalog_subject_bytes = subject_bytes
     _catalog_subject_etags = subject_etags
     catalog_metadata["version"] = version
+    catalog_metadata["terms"] = terms
 
 
 def _catalog_cache_headers(etag: str) -> dict[str, str]:
@@ -257,12 +267,13 @@ async def root():
         "version": "1.0.0",
         "catalog_loaded": len(catalog) > 0,
         "catalog_size": len(catalog),
+        "catalog_terms": catalog_metadata.get("terms", []),
         "rate_limiting": limiter_health,
     }
 
 
 @app.post("/reload")
-async def reload_catalog(x_reload_secret: Optional[str] = Header(default=None)):
+async def reload_catalog(x_reload_secret: Optional[str] = Header(default=None), revision: Optional[str] = None):
     """
     Reload the course catalog from disk without restarting the server.
     If the RELOAD_SECRET env var is set, the X-Reload-Secret header must match it.
@@ -273,7 +284,18 @@ async def reload_catalog(x_reload_secret: Optional[str] = Header(default=None)):
     if reload_secret and x_reload_secret != reload_secret:
         raise HTTPException(status_code=401, detail="Invalid or missing X-Reload-Secret header")
 
-    catalog, catalog_metadata = _load_catalog_from_disk()
+    if revision is not None:
+        try:
+            updated_catalog = await download_catalog(revision)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
+        except Exception:
+            logger.exception('Catalog download failed; keeping the current catalog')
+            raise HTTPException(status_code=503, detail='Catalog download failed; current catalog was preserved')
+        catalog = updated_catalog
+        catalog_metadata = {'loaded_at': datetime.now().isoformat(), 'offering_count': len(catalog), 'source_revision': revision}
+    else:
+        catalog, catalog_metadata = _load_catalog_from_disk()
     _rebuild_catalog_indexes()
     await _solve_cache.clear()
     await _ai_cache.clear()
@@ -466,6 +488,12 @@ async def solve(request_body: SolveRequest, request: Request, response: Response
     if not catalog:
         raise HTTPException(
             status_code=400, detail="Catalog is empty. Please ingest CSV files first."
+        )
+
+    if request_body.term and catalog_metadata.get('terms') != [request_body.term]:
+        raise HTTPException(
+            status_code=409,
+            detail='The schedule catalog is updating for this semester. Please try again shortly.',
         )
 
     # Validate required courses exist using the precomputed catalog indexes.
@@ -674,8 +702,8 @@ async def get_ai_global_stats():
 @app.post("/export/ics")
 async def export_ics(
     schedule: Schedule,
-    term_start: str = "2026-09-01",  # Default Fall 2026 start
-    term_end: str = "2026-12-13",  # Default Fall 2026 end (last day of classes)
+    term_start: Optional[str] = None,
+    term_end: Optional[str] = None,
 ):
     """
     Export a schedule as an ICS calendar file.
@@ -689,10 +717,16 @@ async def export_ics(
         ICS file download
     """
     try:
+        if term_start is None and term_end is None:
+            term_start, term_end = schedule_term_dates({o.term for o in schedule.offerings if o.term})
+        elif term_start is None or term_end is None:
+            raise ValueError('Both semester dates are required')
         start_date = datetime.strptime(term_start, "%Y-%m-%d")
         end_date = datetime.strptime(term_end, "%Y-%m-%d")
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+        if end_date < start_date:
+            raise ValueError('Semester end must follow its start')
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=f"Invalid semester dates: {error}. Use YYYY-MM-DD")
 
     ics_bytes = generate_ics(schedule, start_date, end_date)
 

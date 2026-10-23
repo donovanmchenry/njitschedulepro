@@ -16,6 +16,8 @@ import {
 interface AppState {
   // Catalog
   courses: Course[];
+  catalogTerm?: string;
+  setCatalogTerm: (term?: string) => void;
   setCourses: (courses: Course[]) => void;
   mergeCourseDetails: (courses: Course[]) => void;
 
@@ -78,6 +80,8 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       // Catalog
       courses: [],
+      catalogTerm: undefined,
+      setCatalogTerm: (catalogTerm) => set({ catalogTerm }),
       setCourses: (courses) => set({ courses }),
       mergeCourseDetails: (detailedCourses) =>
         set((state) => {

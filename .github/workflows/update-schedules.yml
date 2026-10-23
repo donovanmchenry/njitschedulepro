@@ -22,6 +22,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: course-catalog-refresh
+  cancel-in-progress: false
+
 jobs:
   update-schedules:
     runs-on: ubuntu-latest
@@ -38,27 +42,29 @@ jobs:
           python-version: '3.11'
 
       - name: Set up Chrome
+        if: github.event_name != 'workflow_dispatch' || inputs.refresh_room_finder
         uses: browser-actions/setup-chrome@v1
         with:
           chrome-version: stable
 
       - name: Set up ChromeDriver
+        if: github.event_name != 'workflow_dispatch' || inputs.refresh_room_finder
         uses: nanasess/setup-chromedriver@v2
 
       - name: Install Python dependencies
+        if: github.event_name != 'workflow_dispatch' || inputs.refresh_room_finder
         working-directory: ./scraper
         run: |
           python -m pip install --upgrade pip
           pip install selenium python-dotenv
 
       - name: Export Spring 2027 for Schedule Builder
-        working-directory: ./scraper
         run: |
-          echo "Starting scraper..."
+          echo "Downloading NJIT public registration catalog..."
           for attempt in 1 2; do
-            python auto_update_scheduler.py --term 202710 --scrape-dir data/temp_scrape --catalog-dir ../courseschedules --workers 3 && exit 0
+            python scraper/registration_catalog.py --term 202710 --catalog-dir courseschedules && exit 0
             if [ "$attempt" -lt 2 ]; then
-              echo "Scrape attempt $attempt failed; retrying with fresh browsers in 60 seconds..."
+              echo "Import attempt $attempt failed; retrying in 60 seconds..."
               sleep 60
             fi
           done
@@ -67,6 +73,8 @@ jobs:
       # Keep the active classroom semester separate from NJIT's default term.
       - name: Export Fall 2026 for Room Finder
         if: github.event_name != 'workflow_dispatch' || inputs.refresh_room_finder
+        # A failure in the legacy export must not prevent publishing Spring.
+        continue-on-error: true
         working-directory: ./scraper
         run: |
           for attempt in 1 2; do
@@ -109,9 +117,11 @@ jobs:
           if [ -z "${API_URL}" ]; then
             echo "API_URL secret not set, skipping reload"
           else
-            curl -sf -X POST "${API_URL}/reload" -H "X-Reload-Secret: ${RELOAD_SECRET}" \
-              && echo "API catalog reloaded successfully" \
-              || echo "Warning: API reload request failed (server may need manual restart)"
+            revision=$(git rev-parse HEAD)
+            curl --fail-with-body --retry 3 --retry-delay 10 --max-time 180 \
+              -X POST "${API_URL%/}/reload?revision=${revision}" \
+              -H "X-Reload-Secret: ${RELOAD_SECRET}"
+            echo "API catalog reloaded successfully"
           fi
 
       - name: No changes detected

@@ -83,7 +83,7 @@ def generate_ics(schedule: Schedule, term_start: datetime, term_end: datetime) -
             event.add("dtend", dtend)
 
             # Add recurrence rule (repeat weekly until term end)
-            event.add("rrule", {"freq": "weekly", "until": term_end})
+            event.add("rrule", {"freq": "weekly", "until": term_end.replace(hour=23, minute=59, second=59)})
 
             # Add UID
             event.add(

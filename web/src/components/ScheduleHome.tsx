@@ -7,11 +7,11 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Notice } from '@/components/Notice';
 import { useAppStore } from '@/lib/store';
 import { apiUrl } from '@/lib/api';
-import { loadCatalogIndex } from '@/lib/catalog';
+import { ACTIVE_TERM, loadCatalogIndex } from '@/lib/catalog';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
-  const { setCourses, setSchedules } = useAppStore();
+  const { setCourses, setSchedules, catalogTerm, setCatalogTerm } = useAppStore();
   const [catalogState, setCatalogState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   useEffect(() => {
@@ -21,6 +21,7 @@ export default function Home() {
         performance.mark('catalog-load-start');
         const data = await loadCatalogIndex();
         setCourses(data.courses || []);
+        setCatalogTerm(data.term || undefined);
         setCatalogState('ready');
         performance.mark('catalog-ready');
         performance.measure('catalog-load', 'catalog-load-start', 'catalog-ready');
@@ -31,7 +32,7 @@ export default function Home() {
     };
 
     loadCourses();
-  }, [setCourses]);
+  }, [setCourses, setCatalogTerm]);
 
   // Load a shared schedule if ?share= is present in the URL
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function Home() {
               priority
             />
             <h1 className="sr-only">NJIT Schedule Pro</h1>
+            {catalogTerm === ACTIVE_TERM.code && <span className="ml-3 text-sm font-medium text-gray-600 dark:text-gray-300">{ACTIVE_TERM.label}</span>}
           </div>
           <ThemeToggle />
       </header>
@@ -80,8 +82,8 @@ export default function Home() {
           >
             <p>
               {catalogState === 'loading'
-                ? 'Loading the latest NJIT course catalog…'
-                : 'The course catalog could not be loaded. Check the API configuration and try again.'}
+                ? `Loading ${ACTIVE_TERM.label} courses…`
+                : `${ACTIVE_TERM.label} course data is temporarily unavailable. Please try again shortly.`}
             </p>
           </Notice>
       )}

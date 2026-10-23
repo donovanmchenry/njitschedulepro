@@ -155,6 +155,9 @@ class TestExtractCourseKey:
     def test_without_space(self):
         assert extract_course_key("CS100") == "CS 100"
 
+    def test_cross_registration_subject_contains_digits(self):
+        assert extract_course_key("R120 102") == "R120 102"
+
     def test_multiple_letters(self):
         assert extract_course_key("ACCT115") == "ACCT 115"
         assert extract_course_key("ARCH 196") == "ARCH 196"

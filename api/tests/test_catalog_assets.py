@@ -1,6 +1,8 @@
 """Tests for the CDN catalog asset builder."""
 
 import csv
+import gzip
+import io
 import json
 import subprocess
 import sys
@@ -82,6 +84,10 @@ def test_catalog_assets_are_compact_complete_and_deterministic(tmp_path):
     assert first_index == (output_dir / "index.json").read_text(encoding="utf-8")
     assert index["total"] == 1
     assert index["term"] == "202710"
+    archive = (output_dir / 'catalog.csv.gz').read_bytes()
+    rows = list(csv.DictReader(io.StringIO(gzip.decompress(archive).decode())))
+    assert len(rows) == 2
+    assert {row['Term'] for row in rows} == {'202710'}
     assert index["courses"][0]["section_count"] == 2
     assert index["courses"][0]["open_section_count"] == 1
     assert "sections" not in index["courses"][0]

@@ -44,6 +44,7 @@ function BuilderStep({
 export function ScheduleBuilder() {
   const {
     courses,
+    catalogTerm,
     selectedCourseKeys,
     courseChoiceGroups,
     requiredCRNs,
@@ -151,6 +152,7 @@ export function ScheduleBuilder() {
     setNoResultsHints(null);
 
     const request: SolveRequest = {
+      term: catalogTerm,
       required_course_keys: selectedCourseKeys,
       course_choice_groups: courseChoiceGroups,
       required_crns: requiredCRNs,
