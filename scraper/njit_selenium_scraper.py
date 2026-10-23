@@ -169,7 +169,7 @@ class NJITSeleniumScraper:
                     term,
                 )
                 term_select.select_by_value(matching_value)
-                logger.info(f"Selected term: {term}")
+                logger.info(f"Selected term: {term} ({term_select.first_selected_option.text})")
             else:
                 # Use the default selected term
                 selected_option = term_select.first_selected_option

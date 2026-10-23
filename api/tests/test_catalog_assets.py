@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 
 def _write_fixture_csv(path: Path) -> None:
     fieldnames = [
@@ -28,6 +30,7 @@ def _write_fixture_csv(path: Path) -> None:
     ]
     rows = [
         {
+            "Term": "202710",
             "Course": "CS 100",
             "Title": "Roadmap to Computing",
             "Section": "001",
@@ -38,6 +41,7 @@ def _write_fixture_csv(path: Path) -> None:
             "Credits": "3",
         },
         {
+            "Term": "202710",
             "Course": "CS100",
             "Title": "Roadmap to Computing",
             "Section": "002",
@@ -77,6 +81,7 @@ def test_catalog_assets_are_compact_complete_and_deterministic(tmp_path):
     subject = json.loads((output_dir / "subjects" / "CS.json").read_text())
     assert first_index == (output_dir / "index.json").read_text(encoding="utf-8")
     assert index["total"] == 1
+    assert index["term"] == "202710"
     assert index["courses"][0]["section_count"] == 2
     assert index["courses"][0]["open_section_count"] == 1
     assert "sections" not in index["courses"][0]
@@ -84,3 +89,33 @@ def test_catalog_assets_are_compact_complete_and_deterministic(tmp_path):
         "Open",
         "Closed",
     }
+
+
+@pytest.mark.parametrize('invalid_terms', [[], ['202695'], ['202710', '202695']])
+def test_wrong_or_empty_semester_cannot_replace_published_assets(tmp_path, invalid_terms):
+    catalog_dir = tmp_path / 'catalog'
+    output_dir = tmp_path / 'output'
+    catalog_dir.mkdir()
+    output_dir.mkdir()
+    published = output_dir / 'index.json'
+    published.write_text('existing published catalog')
+    if invalid_terms:
+        path = catalog_dir / 'cs.csv'
+        _write_fixture_csv(path)
+        with path.open(newline='') as handle:
+            reader = csv.DictReader(handle)
+            fields = reader.fieldnames
+            rows = list(reader)
+        for i, row in enumerate(rows):
+            row['Term'] = invalid_terms[i % len(invalid_terms)]
+        with path.open('w', newline='') as handle:
+            writer = csv.DictWriter(handle, fieldnames=fields)
+            writer.writeheader()
+            writer.writerows(rows)
+    script = Path(__file__).parents[2] / 'scripts' / 'build_catalog_assets.py'
+    result = subprocess.run([
+        sys.executable, str(script), '--catalog-dir', str(catalog_dir),
+        '--output-dir', str(output_dir), '--expected-term', '202710',
+    ], capture_output=True, text=True)
+    assert result.returncode != 0
+    assert published.read_text() == 'existing published catalog'

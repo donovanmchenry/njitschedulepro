@@ -12,7 +12,12 @@ on:
     #   First Years Apr 15 -> 1:30 AM UTC Apr 16
     #   All students Apr 16 -> 1:30 AM UTC Apr 17
     - cron: '*/5 * 12-17 4 *'
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      refresh_room_finder:
+        description: Also refresh the active Fall 2026 room timetable
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -46,12 +51,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install selenium python-dotenv
 
-      - name: Run scraper
+      - name: Export Spring 2027 for Schedule Builder
         working-directory: ./scraper
         run: |
           echo "Starting scraper..."
           for attempt in 1 2; do
-            python auto_update_scheduler.py --scrape-dir data/temp_scrape --catalog-dir ../courseschedules --workers 3 && exit 0
+            python auto_update_scheduler.py --term 202710 --scrape-dir data/temp_scrape --catalog-dir ../courseschedules --workers 3 && exit 0
             if [ "$attempt" -lt 2 ]; then
               echo "Scrape attempt $attempt failed; retrying with fresh browsers in 60 seconds..."
               sleep 60
@@ -61,6 +66,7 @@ jobs:
 
       # Keep the active classroom semester separate from NJIT's default term.
       - name: Export Fall 2026 for Room Finder
+        if: github.event_name != 'workflow_dispatch' || inputs.refresh_room_finder
         working-directory: ./scraper
         run: |
           for attempt in 1 2; do
@@ -73,7 +79,7 @@ jobs:
           exit 1
 
       - name: Build frontend catalog assets
-        run: python scripts/build_catalog_assets.py
+        run: python scripts/build_catalog_assets.py --expected-term 202710
 
       - name: Check for changes
         id: check_changes

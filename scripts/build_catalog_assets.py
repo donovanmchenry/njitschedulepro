@@ -48,8 +48,9 @@ def optional_float(value: str) -> float | None:
         return None
 
 
-def build_assets(catalog_dir: Path, output_dir: Path) -> tuple[int, int, str]:
+def build_assets(catalog_dir: Path, output_dir: Path, expected_term: str | None = None) -> tuple[int, int, str]:
     courses: dict[str, dict] = {}
+    terms: set[str] = set()
     for csv_path in sorted(catalog_dir.glob("*.csv")):
         with csv_path.open(newline="", encoding="utf-8-sig") as handle:
             for row in csv.DictReader(handle):
@@ -57,6 +58,11 @@ def build_assets(catalog_dir: Path, output_dir: Path) -> tuple[int, int, str]:
                 course_key = extract_course_key(row.get("Course") or "")
                 if not crn or not course_key:
                     continue
+                term = (row.get("Term") or "").strip()
+                if expected_term and term != expected_term:
+                    raise ValueError(f"Expected term {expected_term}, found {term!r} in {csv_path.name}")
+                if term:
+                    terms.add(term)
                 course = courses.setdefault(
                     course_key,
                     {
@@ -96,7 +102,12 @@ def build_assets(catalog_dir: Path, output_dir: Path) -> tuple[int, int, str]:
         index_courses.append(summary)
         subject_courses[course["subject"]].append({**summary, "sections": sections})
 
-    digest_source = json.dumps(subject_courses, sort_keys=True, separators=(",", ":")).encode()
+    if not courses:
+        raise ValueError("Refusing to publish an empty course catalog")
+    if len(terms) > 1:
+        raise ValueError(f"Refusing to combine semesters in the builder catalog: {sorted(terms)}")
+    term = next(iter(terms), None)
+    digest_source = json.dumps({"term": term, "subjects": subject_courses}, sort_keys=True, separators=(",", ":")).encode()
     version = hashlib.sha256(digest_source).hexdigest()[:16]
 
     subjects_dir = output_dir / "subjects"
@@ -114,7 +125,7 @@ def build_assets(catalog_dir: Path, output_dir: Path) -> tuple[int, int, str]:
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "index.json").write_text(
         json.dumps(
-            {"version": version, "courses": index_courses, "total": len(index_courses)},
+            {"version": version, "term": term, "courses": index_courses, "total": len(index_courses)},
             separators=(",", ":"),
         )
         + "\n",
@@ -127,8 +138,9 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog-dir", type=Path, default=Path("courseschedules"))
     parser.add_argument("--output-dir", type=Path, default=Path("web/public/catalog"))
+    parser.add_argument("--expected-term", help="Reject empty, mixed, or unexpected semester data before publishing")
     args = parser.parse_args()
-    course_count, subject_count, version = build_assets(args.catalog_dir, args.output_dir)
+    course_count, subject_count, version = build_assets(args.catalog_dir, args.output_dir, args.expected_term)
     print(
         f"Built catalog {version}: {course_count} courses across {subject_count} subjects"
     )
