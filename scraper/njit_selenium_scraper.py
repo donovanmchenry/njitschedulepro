@@ -189,6 +189,9 @@ class NJITSeleniumScraper:
         """
         try:
             # A present table may still be empty while Banner loads the term.
+            WebDriverWait(self.driver, 90).until(
+                EC.invisibility_of_element_located((By.ID, 'loader'))
+            )
             def loaded_subjects(driver):
                 table = driver.find_element(By.ID, 'pbid-subjListTable')
                 links = table.find_elements(By.CSS_SELECTOR, 'tbody tr td a')
@@ -246,12 +249,13 @@ class NJITSeleniumScraper:
         """Wait for course sections to finish loading."""
         try:
             # Wait for the loader to disappear
-            WebDriverWait(self.driver, 30).until(
+            WebDriverWait(self.driver, 90).until(
                 EC.invisibility_of_element_located((By.ID, "loader"))
             )
             time.sleep(1)  # Additional buffer
         except TimeoutException:
             logger.warning("Timeout waiting for sections to load")
+            raise
 
     def download_excel(self):
         """Click the export button and return the new completed CSV path."""
@@ -265,7 +269,7 @@ class NJITSeleniumScraper:
 
             export_button.click()
             logger.info("Clicked 'Export as Excel' button")
-            return self.wait_for_download(previous_files=previous_files)
+            return self.wait_for_download(previous_files=previous_files, timeout=90)
 
         except Exception as e:
             logger.error(f"Export/download failed: {e}")
@@ -320,7 +324,8 @@ class NJITSeleniumScraper:
             self.load_page()
             self.select_term(term)
             # Extra wait for page to fully settle after restart
-            time.sleep(5)
+            if not self.get_subjects():
+                raise RuntimeError('Subject list did not load after browser restart')
             logger.info("Browser restarted successfully")
             return True
         except Exception as e:
@@ -464,6 +469,8 @@ class NJITSeleniumScraper:
             self.start_driver()
             self.load_page()
             self.select_term(term)
+            if not self.get_subjects():
+                raise RuntimeError('Subject list did not load for the selected semester')
 
             total = len(subjects)
             successful = 0

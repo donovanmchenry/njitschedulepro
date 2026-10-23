@@ -68,6 +68,7 @@ class TermSelectionTests(unittest.TestCase):
             scraper = NJITSeleniumScraper(download_dir=directory, headless=True)
             scraper.driver = MagicMock()
             table = scraper.driver.find_element.return_value
+            table.is_displayed.return_value = False
             link = MagicMock()
             link.text = 'CS'
             table.find_elements.side_effect = [[], [], [link]]
