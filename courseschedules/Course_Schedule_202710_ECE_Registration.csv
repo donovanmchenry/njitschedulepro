@@ -123,7 +123,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ECE 591,Graduate Co-op Work Experience II,251,12582,,,,Open,19,0,"Wang, Cong",Face-To-Face,1,,
 202710,ECE 592,Graduate Co-op Work Experience III,251,12583,,,,Open,19,0,"Wang, Cong",Face-To-Face,1,,
 202710,ECE 593,Graduate Co-op Work Experience IV,251,12584,,,,Open,19,0,"Wang, Cong",Face-To-Face,0,,
-202710,ECE 601,Linear Systems,852,12585,,,,Closed,0,0,"Ge, Hongya",Online Virtual,3,,
+202710,ECE 601,Linear Systems,852,12585,,,,Open,40,0,"Ge, Hongya",Online Virtual,3,,
 202710,ECE 611,Transients in Power Systems,852,12586,,,,Open,30,0,"Gies, Donald D.",Online Virtual,3,,
 202710,ECE 616,Power Electronics,852,12587,,,,Open,30,0,"Yousef, Ahmed",Online Virtual,3,,
 202710,ECE 618,Photovoltaic Semiconductors and Renewable Energy,102,12588,W,6:00 PM - 8:50 PM,FMH 404,Open,30,0,"Ko, Dong Kyun",Face-To-Face,3,,

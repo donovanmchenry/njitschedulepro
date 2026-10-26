@@ -1,7 +1,7 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
 202710,CHEM 121,Fundamentals of Chemical Principles I,002,11370,M,2:30 PM - 3:50 PM,WEST LECT 2,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 121,Fundamentals of Chemical Principles I,002,11370,R,4:00 PM - 5:20 PM,TIER LECT 1,Open,43,0,,Face-To-Face,3,,
-202710,CHEM 121,Fundamentals of Chemical Principles I,004,11371,R,10:00 AM - 11:20 AM,KUPF 209,Open,43,0,,Face-To-Face,3,,
+202710,CHEM 121,Fundamentals of Chemical Principles I,004,11371,T,4:00 PM - 5:20 PM,CKB 217,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 121,Fundamentals of Chemical Principles I,004,11371,R,4:00 PM - 5:20 PM,TIER LECT 1,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 121,Fundamentals of Chemical Principles I,006,11372,T,2:30 PM - 3:50 PM,KUPF 207,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 121,Fundamentals of Chemical Principles I,006,11372,R,4:00 PM - 5:20 PM,TIER LECT 1,Open,43,0,,Face-To-Face,3,,
@@ -17,6 +17,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,CHEM 125,General Chemistry I,006,11377,F,1:00 PM - 2:20 PM,WEST LECT 2,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 125,General Chemistry I,008,11378,W,8:30 AM - 9:50 AM,ME 221,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 125,General Chemistry I,008,11378,F,10:00 AM - 11:20 AM,TIER LECT 1,Open,43,0,,Face-To-Face,3,,
+202710,CHEM 125,General Chemistry I,010,11379,W,10:00 AM - 11:20 AM,KUPF 104,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 125,General Chemistry I,010,11379,F,10:00 AM - 11:20 AM,TIER LECT 1,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 125,General Chemistry I,104,11380,T,6:00 PM - 8:50 PM,WEST LECT 2,Open,43,0,,Face-To-Face,3,,
 202710,CHEM 125A,General Chemistry  Lab I,002,11381,T,2:30 PM - 5:20 PM,TIER 204,Open,30,0,,Face-To-Face,1,,

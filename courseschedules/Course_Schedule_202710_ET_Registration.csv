@@ -6,4 +6,5 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ET 103,Introduction to Engineering Technology Design,102,13107,M,6:00 PM - 10:05 PM,GITC 2305,Open,25,0,"Orlos, Daniel",Face-To-Face,2,,
 202710,ET 103,Introduction to Engineering Technology Design,104,13108,T,6:00 PM - 10:05 PM,GITC 2302,Open,25,0,,Face-To-Face,2,,
 202710,ET 400,Professional Engineer (PE) Preparation,102,13109,R,6:00 PM - 8:50 PM,CKB 310,Open,30,0,"Botros, Mina",Face-To-Face,3,,
-202710,ET 450,Multidisciplinary Capstone Project,102,13110,W,6:00 PM - 10:05 PM,CKB 214,Open,25,0,,Face-To-Face,3,,
+202710,ET 450,Multidisciplinary Capstone Project,102,13110,W,6:00 PM - 8:05 PM,CKB 214,Open,25,0,,Hybrid,3,,
+202710,ET 450,Multidisciplinary Capstone Project,102,13110,,,,Open,25,0,,Hybrid,3,,
