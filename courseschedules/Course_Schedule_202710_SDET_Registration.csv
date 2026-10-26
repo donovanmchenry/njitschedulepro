@@ -1,8 +1,8 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,M,8:30 AM - 10:35 AM,TIER 113,Open,30,0,,Face-To-Face,3,,
-202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,W,8:30 AM - 10:35 AM,TIER 107,Open,30,0,,Face-To-Face,3,,
-202710,SDET 101,Fundamentals of Software and Data Technologies,102,15492,T,6:00 PM - 10:05 PM,TIER 106,Open,30,0,,Face-To-Face,3,,
-202710,SDET 102,Applications of Software Engineering Technology,102,15493,W,6:00 PM - 10:05 PM,TIER 108,Open,30,0,,Face-To-Face,3,,
+202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,M,8:30 AM - 10:35 AM,TIER 113,Open,30,0,"Wu, Yufei",Face-To-Face,3,,
+202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,W,8:30 AM - 10:35 AM,TIER 107,Open,30,0,"Wu, Yufei",Face-To-Face,3,,
+202710,SDET 101,Fundamentals of Software and Data Technologies,102,15492,T,6:00 PM - 10:05 PM,TIER 106,Open,30,0,"Perumalsamy, Anuradha",Face-To-Face,3,,
+202710,SDET 102,Applications of Software Engineering Technology,102,15493,W,6:00 PM - 10:05 PM,TIER 108,Open,30,0,"Iaboni, Craig S",Face-To-Face,3,,
 202710,SDET 201,Data Engineering,102,15494,M,6:00 PM - 10:05 PM,CKB 223,Open,30,0,,Face-To-Face,3,,
 202710,SDET 325,Medical Informatics Technology,102,15495,R,6:00 PM - 8:50 PM,CKB 204,Open,30,0,"Lubliner, David J.",Face-To-Face,3,,
 202710,SDET 335,Networks Applications for Software and Data Engineering Technology I,102,15496,R,6:00 PM - 10:05 PM,GITC 2308,Open,20,0,"Vanderbilt, Richard W.",Face-To-Face,3,,
