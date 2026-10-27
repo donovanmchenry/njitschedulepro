@@ -135,7 +135,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ECE 651,Wind Power Transmission and Grid Interconnection,852,12594,,,,Open,30,0,"Wilches, Rafael E.",Online Virtual,3,,
 202710,ECE 670,Management Strategies in the Power Industry,852,12595,,,,Open,30,0,,Online Virtual,3,,
 202710,ECE 673,Random Signal and Data Analysis,102,12596,R,6:00 PM - 8:50 PM,KUPF 105,Open,30,0,"Abdi, Ali",Face-To-Face,3,,
-202710,ECE 690,Computer Systems Architecture,102,12597,R,6:00 PM - 8:50 PM,KUPF 210,Open,30,0,"Liu, Qing",Face-To-Face,3,,
+202710,ECE 690,Computer Systems Architecture,102,12597,R,6:00 PM - 8:50 PM,FENS 540,Open,30,0,"Liu, Qing",Face-To-Face,3,,
 202710,ECE 692,Embedded Computing Systems,102,12598,M,6:00 PM - 8:50 PM,KUPF 211,Open,30,0,"Walker-Soler, Jean P.",Face-To-Face,3,,
 202710,ECE 700B,Master's Project,230,12602,,,,Open,19,0,"Netto, Marcos",Face-To-Face,3,,
 202710,ECE 700B,Master's Project,240,12603,,,,Open,19,0,"Akansu, Ali N.",Face-To-Face,3,,
