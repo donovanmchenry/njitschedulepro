@@ -2,7 +2,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,SET 200,Introduction To Geomatics,102,15506,M,6:00 PM - 7:20 PM,CKB 214,Open,25,0,"Potts, Laramie Vance",Hybrid,2,,
 202710,SET 200A,Introduction to Geomatics Lab,102,15507,S,9:00 AM - 2:50 PM,MALL PC39,Open,25,0,"Todosov, Angel",Face-To-Face,1,,
 202710,SET 207,Evidence and Procedures for Property Surveys ,102,15508,T,6:00 PM - 8:50 PM,CKB 222,Open,30,0,"Todosov, Angel",Face-To-Face,3,,
-202710,SET 304,Adjustment Computations I,102,15509,F,6:00 PM - 8:50 PM,KUPF 106,Open,30,0,"Potts, Laramie Vance",Face-To-Face,3,,
+202710,SET 304,Adjustment Computations I,450,15509,,,,Open,30,0,"Potts, Laramie Vance",Online Virtual,3,,
 202710,SET 395,Co-op Work Experience I,359,15510,,,,Open,19,0,"Potts, Laramie Vance",Face-To-Face,3,,
 202710,SET 407,Boundary Line Analysis,102,15511,S,9:00 AM - 2:50 PM,MALL PC40,Open,25,0,"Todosov, Angel",Face-To-Face,4,,
 202710,SET 490,Senior Project in Surveying,102,15513,W,6:00 PM - 10:05 PM,TIER LECT 2,Open,25,0,"Potts, Laramie Vance",Face-To-Face,3,,
