@@ -5,7 +5,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,IT 114,Advanced Programming for Information Technology,002,13930,TR,1:00 PM - 2:20 PM,CKB 313,Open,35,0,"Toegel, Matt A.",Face-To-Face,3,,
 202710,IT 114,Advanced Programming for Information Technology,004,13931,TR,4:00 PM - 5:20 PM,GITC 3600,Open,35,0,"Halper, Michael H.",Face-To-Face,3,,
 202710,IT 114,Advanced Programming for Information Technology,006,13932,TR,10:00 AM - 11:20 AM,CKB 320,Open,35,0,"Woodruff, Omar Abdullah",Face-To-Face,3,,
-202710,IT 114,Advanced Programming for Information Technology,008,13933,MW,8:30 AM - 9:50 AM,TIER 112,Open,35,0,"Vohra, Rosemina A.",Face-To-Face,3,,
+202710,IT 114,Advanced Programming for Information Technology,008,13933,MW,8:30 AM - 9:50 AM,TIER 112,Open,35,0,,Face-To-Face,3,,
 202710,IT 120,Introduction to Network Technology,002,13934,MR,8:30 AM - 9:50 AM,GITC 1202,Open,30,0,"Farley, Jennifer E",Face-To-Face,3,,
 202710,IT 120,Introduction to Network Technology,004,13935,TR,4:00 PM - 5:20 PM,GITC 1202,Open,30,0,"Farley, Jennifer E",Face-To-Face,3,,
 202710,IT 120,Introduction to Network Technology,006,13936,MR,10:00 AM - 11:20 AM,GITC 1202,Open,30,0,"Tolboom, Ryan",Face-To-Face,3,,
