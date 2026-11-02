@@ -110,7 +110,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,IS 676,Requirement Engineering,102,13736,W,6:00 PM - 8:50 PM,CKB 220,Open,15,0,"Kirova, Vassilka",Hybrid,3,,
 202710,IS 676,Requirement Engineering,102,13736,,,,Open,15,0,"Kirova, Vassilka",Hybrid,3,,
 202710,IS 676,Requirement Engineering,852,13737,,,,Open,15,0,"Kirova, Vassilka",Online Virtual,3,,
-202710,IS 681,Computer Security Auditing,852,13738,,,,Open,30,0,,Online Virtual,3,,
+202710,IS 681,Computer Security Auditing,852,13738,,,,Open,30,0,"Pak, Charles",Online Virtual,3,,
 202710,IS 684,Business Process Innovation,852,13739,,,,Open,30,0,,Online Virtual,3,,
 202710,IS 688,Web Mining,002,13740,F,1:00 PM - 3:50 PM,KUPF 204,Open,15,0,"Lin, Lin",Hybrid,3,,
 202710,IS 688,Web Mining,002,13740,,,,Open,15,0,"Lin, Lin",Hybrid,3,,
