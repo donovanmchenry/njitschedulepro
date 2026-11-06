@@ -1,6 +1,6 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
 202710,HIST 213,The Twentieth-Century World,002,13362,MW,8:30 AM - 9:50 AM,CKB 320,Open,32,4,"Fuller, Frank R.",Face-To-Face,3,,
-202710,HIST 213,The Twentieth-Century World,004,13363,MW,10:00 AM - 11:20 AM,CULM 111,Open,32,1,"Friedman, Matthew W.",Face-To-Face,3,,
+202710,HIST 213,The Twentieth-Century World,004,13363,MW,10:00 AM - 11:20 AM,CULM 111,Open,32,2,"Friedman, Matthew W.",Face-To-Face,3,,
 202710,HIST 213,The Twentieth-Century World,006,13364,MW,11:30 AM - 12:50 PM,KUPF 118,Open,32,9,"Fuller, Frank R.",Face-To-Face,3,,
 202710,HIST 213,The Twentieth-Century World,008,13365,TR,11:30 AM - 12:50 PM,CKB 222,Open,32,0,"Petursson, Svanur",Face-To-Face,3,,
 202710,HIST 213,The Twentieth-Century World,010,13366,TR,4:00 PM - 5:20 PM,CKB 313,Open,32,1,"Kent, Scott L.",Face-To-Face,3,,
@@ -14,7 +14,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,HIST 325,ST: Data and Democracy,004,13374,F,1:00 PM - 3:50 PM,CULM 110,Open,32,0,"Kostopoulou, Ilektra",Face-To-Face,3,,
 202710,HIST 329,"DANTE: HEAVEN, HELL, AND MEDIEVAL FLORENCE - HONORS",H02,15959,R,6:00 PM - 8:50 PM,,Closed,0,0,"Hamilton, Louis I.",Face-To-Face,3,,
 202710,HIST 344,African-American History II,102,13375,W,6:00 PM - 8:50 PM,CULM 110,Open,32,0,"Toler, Herbert H.",Face-To-Face,3,,
-202710,HIST 345,Communication through the Ages,002,13376,MW,11:30 AM - 12:50 PM,CULM 110,Open,32,4,"Friedman, Matthew W.",Face-To-Face,3,,
+202710,HIST 345,Communication through the Ages,002,13376,MW,11:30 AM - 12:50 PM,CULM 110,Open,32,5,"Friedman, Matthew W.",Face-To-Face,3,,
 202710,HIST 362,"Sex, Gender, and the Law in American History",002,13377,MW,10:00 AM - 11:20 AM,CULM 110,Open,32,6,"Lefkovitz, Alison L.",Face-To-Face,3,,
 202710,HIST 363,The United States as a World Power,102,13378,M,6:00 PM - 8:50 PM,CKB 106,Open,32,5,"Morrison-Santana, Deborah C.",Face-To-Face,3,,
 202710,HIST 370,Legal issues in the History of Media,102,13379,R,6:00 PM - 8:50 PM,CULM 110,Open,32,5,"Cohen, Richard A.",Face-To-Face,3,,
