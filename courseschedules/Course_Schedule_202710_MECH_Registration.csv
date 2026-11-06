@@ -1,6 +1,6 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,MECH 234,Engineering Mechanics,002,14525,R,10:00 AM - 12:05 PM,FENS 510,Open,80,1,"Castro, Eduardo",Hybrid,2,,
-202710,MECH 234,Engineering Mechanics,002,14525,R,12:10 PM - 1:10 PM,GITC 1100,Open,80,1,"Castro, Eduardo",Hybrid,2,,
+202710,MECH 234,Engineering Mechanics,002,14525,R,10:00 AM - 12:05 PM,FENS 510,Open,80,2,"Castro, Eduardo",Hybrid,2,,
+202710,MECH 234,Engineering Mechanics,002,14525,R,12:10 PM - 1:10 PM,GITC 1100,Open,80,2,"Castro, Eduardo",Hybrid,2,,
 202710,MECH 234,Engineering Mechanics,004,14526,W,10:00 AM - 12:05 PM,CKB 217,Open,80,6,"Castro, Eduardo",Hybrid,2,,
 202710,MECH 234,Engineering Mechanics,004,14526,W,12:10 PM - 1:10 PM,KUPF 210,Open,80,6,"Castro, Eduardo",Hybrid,2,,
 202710,MECH 234,Engineering Mechanics,006,14527,F,2:30 PM - 4:35 PM,GITC 1100,Open,80,0,"Shabarek, Abdullah",Hybrid,2,,
