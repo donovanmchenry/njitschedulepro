@@ -6,7 +6,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,SDET 201,Data Engineering,102,15494,M,6:00 PM - 10:05 PM,CKB 223,Open,30,1,,Face-To-Face,3,,
 202710,SDET 335,Networks Applications for Software and Data Engineering Technology I,102,15496,R,6:00 PM - 10:05 PM,GITC 2308,Open,20,1,"Vanderbilt, Richard W.",Face-To-Face,3,,
 202710,SDET 345,Networks Applications for Software and Data Engineering Technology II,102,15497,M,6:00 PM - 10:05 PM,GITC 2308,Open,20,0,"Vanderbilt, Richard W.",Face-To-Face,3,,
-202710,SDET 373,Web App Development for Mobile,102,15498,W,6:00 PM - 10:05 PM,CKB 212,Open,30,0,"Nasello, Daniel J.",Face-To-Face,3,,
+202710,SDET 373,Web App Development for Mobile,102,15498,W,6:00 PM - 10:05 PM,CKB 212,Open,30,1,"Nasello, Daniel J.",Face-To-Face,3,,
 202710,SDET 373,Web App Development for Mobile,104,15499,M,6:00 PM - 10:05 PM,TIER 111,Open,30,6,"Nasello, Daniel J.",Face-To-Face,3,,
 202710,SDET 395,Co-op Work Experience I,340,15500,,,,Open,19,0,"Abichandani, Pramod V.",Face-To-Face,3,,
 202710,SDET 401,Senior Project,102,15501,W,6:00 PM - 10:05 PM,TIER 114,Open,25,2,,Face-To-Face,3,,
