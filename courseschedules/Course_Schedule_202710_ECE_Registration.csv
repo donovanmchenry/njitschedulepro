@@ -1,5 +1,5 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,ECE 101, Introduction to Electrical and Computer Engineering,002,12482,T,5:00 PM - 5:50 PM,WEST LECT 1,Open,144,4,"Mathes, Ryoko",Face-To-Face,0,,
+202710,ECE 101, Introduction to Electrical and Computer Engineering,002,12482,T,5:00 PM - 5:50 PM,WEST LECT 1,Open,144,5,"Mathes, Ryoko",Face-To-Face,0,,
 202710,ECE 231,Circuits and Systems I,002,12483,MW,1:00 PM - 2:20 PM,KUPF 204,Open,40,2,,Face-To-Face,3,,
 202710,ECE 231,Circuits and Systems I,002,12483,R,4:00 PM - 5:00 PM,KUPF 208,Open,40,2,,Face-To-Face,3,,
 202710,ECE 231,Circuits and Systems I,102,12484,T,6:00 PM - 10:05 PM,ECEC 115,Open,50,3,,Face-To-Face,3,,
@@ -106,7 +106,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ECE 425,Wireless Communication Systems,102,12567,M,6:00 PM - 8:50 PM,ECEC 115,Open,35,1,"Kliewer, Joerg",Face-To-Face,3,,
 202710,ECE 429,Computer Communications Lab,002,12568,M,1:00 PM - 5:20 PM,FMH 101C,Open,12,1,,Face-To-Face,2,,
 202710,ECE 429,Computer Communications Lab,102,12569,T,6:00 PM - 10:05 PM,FMH 101C,Open,12,0,,Face-To-Face,2,,
-202710,ECE 432,Advanced Control Systems and Robotics,002,12570,TF,1:00 PM - 2:20 PM,ECEC 115,Open,60,7,"Wang, Cong",Face-To-Face,3,,
+202710,ECE 432,Advanced Control Systems and Robotics,002,12570,TF,1:00 PM - 2:20 PM,ECEC 115,Open,60,8,"Wang, Cong",Face-To-Face,3,,
 202710,ECE 439,Control Systems Laboratory,102,12571,R,6:00 PM - 10:05 PM,FMH 204A,Open,36,4,"Dentato, Michael A",Face-To-Face,2,,
 202710,ECE 439,Control Systems Laboratory,104,12572,F,6:00 PM - 10:05 PM,FMH 204A,Open,36,0,"Dentato, Michael A",Face-To-Face,2,,
 202710,ECE 442,Power Systems,002,12573,WF,10:00 AM - 11:20 AM,FMH 404,Open,30,2,"Pong, Philip",Face-To-Face,3,,
