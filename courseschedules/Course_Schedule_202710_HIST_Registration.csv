@@ -1,7 +1,7 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
 202710,HIST 213,The Twentieth-Century World,002,13362,MW,8:30 AM - 9:50 AM,CKB 320,Open,32,5,"Fuller, Frank R.",Face-To-Face,3,,
 202710,HIST 213,The Twentieth-Century World,004,13363,MW,10:00 AM - 11:20 AM,CULM 111,Open,32,2,"Friedman, Matthew W.",Face-To-Face,3,,
-202710,HIST 213,The Twentieth-Century World,006,13364,MW,11:30 AM - 12:50 PM,KUPF 118,Open,32,8,"Fuller, Frank R.",Face-To-Face,3,,
+202710,HIST 213,The Twentieth-Century World,006,13364,MW,11:30 AM - 12:50 PM,KUPF 118,Open,32,9,"Fuller, Frank R.",Face-To-Face,3,,
 202710,HIST 213,The Twentieth-Century World,008,13365,TR,11:30 AM - 12:50 PM,CKB 222,Open,32,0,"Petursson, Svanur",Face-To-Face,3,,
 202710,HIST 213,The Twentieth-Century World,010,13366,TR,4:00 PM - 5:20 PM,CKB 313,Open,32,1,"Kent, Scott L.",Face-To-Face,3,,
 202710,HIST 310,HISTORY CO-OP I,641,13367,,,,Open,19,0,"Pemberton, Stephen G.",Face-To-Face,3,,
@@ -20,7 +20,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,HIST 370,Legal issues in the History of Media,102,13379,R,6:00 PM - 8:50 PM,CULM 110,Open,32,5,"Cohen, Richard A.",Face-To-Face,3,,
 202710,HIST 372,Contemporary Europe,002,13380,TR,2:30 PM - 3:50 PM,CKB 114,Open,32,0,"Petursson, Svanur",Face-To-Face,3,,
 202710,HIST 373,The Rise of Modern Science,002,13381,MW,1:00 PM - 2:20 PM,CULM 110,Open,32,1,"Schweizer, Karl W.",Face-To-Face,3,,
-202710,HIST 381,Science and Technology in Modern Medicine - HONORS,H02,13382,TF,10:00 AM - 11:20 AM,CKB 313,Open,24,15,"Pemberton, Stephen G.",Face-To-Face,3,,
+202710,HIST 381,Science and Technology in Modern Medicine - HONORS,H02,13382,TF,10:00 AM - 11:20 AM,CKB 313,Open,24,14,"Pemberton, Stephen G.",Face-To-Face,3,,
 202710,HIST 388,Britain in the 20th Century,102,13383,W,6:00 PM - 8:50 PM,CULM 111,Open,32,1,"Kent, Scott L.",Face-To-Face,3,,
 202710,HIST 401,Independent Study,004,13384,,,,Open,19,0,"Hamilton, Louis I.",Face-To-Face,3,,
 202710,HIST 401,Independent Study,641,13385,,,,Open,19,0,"Pemberton, Stephen G.",Face-To-Face,3,,
