@@ -43,7 +43,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,CS 280,Programming Language Concepts,008,11752,MR,2:30 PM - 3:50 PM,FENS 550,Open,55,1,"Arafeh, Bassel",Face-To-Face,3,,
 202710,CS 288,Intensive Programming in Linux,002,11753,MR,8:30 AM - 9:50 AM,FENS 540,Open,43,0,"Itani, Abdul-Rahman M.",Face-To-Face,3,,
 202710,CS 288,Intensive Programming in Linux,004,11754,TF,8:30 AM - 9:50 AM,FENS 450,Open,43,2,"Dale, Mohit",Face-To-Face,3,,
-202710,CS 288,Intensive Programming in Linux,006,11755,TF,1:00 PM - 2:20 PM,FENS 510,Open,43,3,"Dale, Mohit",Face-To-Face,3,,
+202710,CS 288,Intensive Programming in Linux,006,11755,TF,1:00 PM - 2:20 PM,FENS 510,Open,43,4,"Dale, Mohit",Face-To-Face,3,,
 202710,CS 288,Intensive Programming in Linux,008,11756,MR,1:00 PM - 2:20 PM,FENS 550,Open,43,1,"Itani, Abdul-Rahman M.",Face-To-Face,3,,
 202710,CS 301,Introduction to Data Science,002,11757,TR,4:00 PM - 5:20 PM,FENS 450,Open,43,8,"Bakhshaliyev, Khalid",Face-To-Face,3,,
 202710,CS 301,Introduction to Data Science,004,11758,TR,11:30 AM - 12:50 PM,FENS 550,Open,43,3,"Bakhshaliyev, Khalid",Face-To-Face,3,,

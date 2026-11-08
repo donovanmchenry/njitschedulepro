@@ -2,7 +2,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,DS 100,Basic Foundations of Data Science,002,12264,TR,10:00 AM - 11:20 AM,KUPF 103,Open,43,1,"Hou, Xinying",Face-To-Face,3,,
 202710,DS 110,Basic Foundations of Artificial Intelligence,002,12265,TR,11:30 AM - 12:50 PM,KUPF 105,Open,43,8,"Yusuf, Fatima",Face-To-Face,3,,
 202710,DS 110,Basic Foundations of Artificial Intelligence,004,12266,WF,10:00 AM - 11:20 AM,KUPF 103,Open,43,4,"Yusuf, Fatima",Face-To-Face,3,,
-202710,DS 340,Fundamentals and Principles of Data Science,002,12267,TR,11:30 AM - 12:50 PM,CKB 204,Open,43,5,"Bhavsar, Jaini K.",Face-To-Face,3,,
+202710,DS 340,Fundamentals and Principles of Data Science,002,12267,TR,11:30 AM - 12:50 PM,CKB 204,Open,43,6,"Bhavsar, Jaini K.",Face-To-Face,3,,
 202710,DS 400,Scientific Foundation of Machine Learning,002,12268,TR,2:30 PM - 3:50 PM,FENS 450,Open,43,4,"Zhang, Shuai",Face-To-Face,3,,
 202710,DS 450,Data Visualization,002,12269,TR,4:00 PM - 5:20 PM,CKB 219,Open,30,5,"Islam, Akm Z",Face-To-Face,3,,
 202710,DS 488,Independent Study in Data Science,146,12270,,,,Open,19,0,"Jin, Huiran",Face-To-Face,3,,
