@@ -28,7 +28,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,DS 488,Independent Study in Data Science,616,12290,,,,Open,19,0,"Phan, Hai Nhat",Face-To-Face,3,,
 202710,DS 488,Independent Study in Data Science,624,12291,,,,Open,19,0,"Wang, Guiling",Face-To-Face,3,,
 202710,DS 488,Independent Study in Data Science,693,12292,,,,Open,19,0,"Afkhami, Shahriar",Face-To-Face,3,,
-202710,DS 492,Data Science Capstone I,102,12293,W,6:00 PM - 8:50 PM,CKB 204,Open,15,0,"Wu, Chase Qishi",Face-To-Face,3,,
+202710,DS 492,Data Science Capstone I,102,12293,W,6:00 PM - 8:50 PM,CKB 204,Open,15,1,"Wu, Chase Qishi",Face-To-Face,3,,
 202710,DS 492,DATA SCIENCE CAPSTONE I - HONORS,HM2,12294,W,6:00 PM - 8:50 PM,CKB 204,Open,5,0,"Wu, Chase Qishi",Face-To-Face,3,,
 202710,DS 493,Data Science Capstone II,102,12295,W,6:00 PM - 8:50 PM,CKB 204,Open,12,3,"Wu, Chase Qishi",Face-To-Face,3,,
 202710,DS 493,DATA SCIENCE CAPSTONE II - HONORS,HM2,12296,W,6:00 PM - 8:50 PM,CKB 204,Open,8,6,"Wu, Chase Qishi",Face-To-Face,3,,
