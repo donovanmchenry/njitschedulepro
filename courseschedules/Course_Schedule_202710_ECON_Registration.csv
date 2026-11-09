@@ -1,7 +1,7 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
 202710,ECON 201,Economics,002,12833,F,8:30 AM - 11:20 AM,KUPF 106,Open,43,1,"Bonitsis, Theologos H.",Hybrid,3,,
-202710,ECON 201,Economics,004,12834,WF,1:00 PM - 2:20 PM,KUPF 107,Open,33,2,"Chou, Porchiung B.",Face-To-Face,3,,
-202710,ECON 201,Economics,452,12835,,,,Open,30,9,"Bonitsis, Theologos H.",Online Newark,3,,
+202710,ECON 201,Economics,004,12834,WF,1:00 PM - 2:20 PM,KUPF 107,Open,33,3,"Chou, Porchiung B.",Face-To-Face,3,,
+202710,ECON 201,Economics,452,12835,,,,Open,30,10,"Bonitsis, Theologos H.",Online Newark,3,,
 202710,ECON 201,Economics,454,12836,,,,Open,30,2,"Bonitsis, Theologos H.",Online Newark,3,,
 202710,ECON 201,Economics,456,12837,,,,Open,30,0,"Bonitsis, Theologos H.",Online Newark,3,,
 202710,ECON 201,Economics - Honors,HM2,12838,WF,1:00 PM - 2:20 PM,KUPF 107,Open,10,0,"Chou, Porchiung B.",Face-To-Face,3,,
