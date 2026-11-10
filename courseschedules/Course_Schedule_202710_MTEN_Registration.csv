@@ -1,6 +1,6 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
 202710,MTEN 101,Introduction to Materials Engineering,002,14682,T,10:00 AM - 11:00 AM,TIER 105,Open,30,2,"Guvendiren, Murat",Face-To-Face,1,,
-202710,MTEN 201,Introductory Principles of Materials Engineering,002,14683,TR,1:00 PM - 2:20 PM,KUPF 118,Open,50,23,"Zhao, Mark",Face-To-Face,3,,
+202710,MTEN 201,Introductory Principles of Materials Engineering,002,14683,TR,1:00 PM - 2:20 PM,KUPF 118,Open,50,24,"Zhao, Mark",Face-To-Face,3,,
 202710,MTEN 201,Introductory Principles of Materials Engineering,HM2,14684,TR,1:00 PM - 2:20 PM,KUPF 118,Open,10,4,"Zhao, Mark",Face-To-Face,3,,
 202710,MTEN 205,Mechanical Behavior of Materials,002,14685,M,11:30 AM - 2:20 PM,TIER 109,Open,30,3,"McEnnis, Kathleen",Face-To-Face,4,,
 202710,MTEN 205,Mechanical Behavior of Materials,002,14685,W,11:30 AM - 1:35 PM,TIER 206,Open,30,3,"McEnnis, Kathleen",Face-To-Face,4,,
@@ -79,7 +79,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,MTEN 492,Research and Independent Study II,445,14756,,,,Open,19,0,"Dave, Rajesh N.",Face-To-Face,3,,
 202710,MTEN 492,Research and Independent Study II,486,14757,,,,Open,19,0,"Khusid, Boris",Face-To-Face,3,,
 202710,MTEN 492,Research and Independent Study II,487,14758,,,,Open,19,0,"Dreyzin, Edward L.",Face-To-Face,3,,
-202710,MTEN 613,Characterization of Materials,102,14759,R,6:00 PM - 8:50 PM,TIER 109,Open,30,0,"Schoenitz, Mirko",Face-To-Face,3,,
+202710,MTEN 613,Characterization of Materials,102,14759,R,6:00 PM - 8:50 PM,TIER 109,Open,30,1,"Schoenitz, Mirko",Face-To-Face,3,,
 202710,MTEN 633,Machine Learning for Engineers,852,14760,,,,Open,30,0,"Dave, Rajesh N.",Face-To-Face,3,,
 202710,MTEN 700B,Master's Project,071,14761,,,,Open,19,0,"Sirkar, Kamalesh K.",Face-To-Face,3,,
 202710,MTEN 700B,Master's Project,080,14762,,,,Open,19,0,"Armenante, Piero M.",Face-To-Face,3,,
