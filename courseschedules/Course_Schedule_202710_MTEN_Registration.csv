@@ -1,9 +1,9 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,MTEN 101,Introduction to Materials Engineering,002,14682,T,10:00 AM - 11:00 AM,TIER 105,Open,30,3,"Guvendiren, Murat",Face-To-Face,1,,
-202710,MTEN 201,Introductory Principles of Materials Engineering,002,14683,TR,1:00 PM - 2:20 PM,KUPF 118,Open,50,35,"Zhao, Mark",Face-To-Face,3,,
+202710,MTEN 101,Introduction to Materials Engineering,002,14682,T,10:00 AM - 11:00 AM,TIER 105,Open,30,4,"Guvendiren, Murat",Face-To-Face,1,,
+202710,MTEN 201,Introductory Principles of Materials Engineering,002,14683,TR,1:00 PM - 2:20 PM,KUPF 118,Open,50,38,"Zhao, Mark",Face-To-Face,3,,
 202710,MTEN 201, INTRO PRINC OF MATERIAL ENGR- Honors,HM2,14684,TR,1:00 PM - 2:20 PM,KUPF 118,Open,10,4,"Zhao, Mark",Face-To-Face,3,,
-202710,MTEN 205,Mechanical Behavior of Materials,002,14685,M,11:30 AM - 2:20 PM,TIER 109,Open,30,3,"McEnnis, Kathleen",Face-To-Face,4,,
-202710,MTEN 205,Mechanical Behavior of Materials,002,14685,W,11:30 AM - 1:35 PM,TIER 206,Open,30,3,"McEnnis, Kathleen",Face-To-Face,4,,
+202710,MTEN 205,Mechanical Behavior of Materials,002,14685,M,11:30 AM - 2:20 PM,TIER 109,Open,30,4,"McEnnis, Kathleen",Face-To-Face,4,,
+202710,MTEN 205,Mechanical Behavior of Materials,002,14685,W,11:30 AM - 1:35 PM,TIER 206,Open,30,4,"McEnnis, Kathleen",Face-To-Face,4,,
 202710,MTEN 311,Kinetics of Materials,002,14686,TR,2:30 PM - 3:50 PM,FMH 403,Open,25,3,"Chintersingh, Kerri Lee Annique",Face-To-Face,3,,
 202710,MTEN 311,KINETICS OF MATERIALS- Honors,HM2,14687,TR,2:30 PM - 3:50 PM,FMH 403,Open,5,0,"Chintersingh, Kerri Lee Annique",Face-To-Face,3,,
 202710,MTEN 395,Materials Engineering Laboratory,002,14688,T,8:30 AM - 2:20 PM,TIER 206,Open,30,4,"Molodetsky, Irina",Face-To-Face,4,,
