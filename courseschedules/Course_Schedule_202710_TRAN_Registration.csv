@@ -1,5 +1,5 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,TRAN 625,Public Transportation Operations and Technology,852,15539,,,,Open,30,1,"Chien, I Jy Steven",Online Virtual,3,,
+202710,TRAN 625,Public Transportation Operations and Technology,852,15539,,,,Open,30,2,"Chien, I Jy Steven",Online Virtual,3,,
 202710,TRAN 700B,Master'S Project,202,15540,,,,Open,19,0,"Lee, Joyoung",Face-To-Face,3,,
 202710,TRAN 700B,Master'S Project,203,15541,,,,Open,19,0,"Dimitrijevic, Branislav",Face-To-Face,3,,
 202710,TRAN 700B,Master'S Project,206,15542,,,,Open,19,0,"Bai, Yun",Face-To-Face,3,,
@@ -31,6 +31,8 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,TRAN 725,Independent Study,882,15567,,,,Open,19,0,"Spasovic, Lazar",Face-To-Face,3,,
 202710,TRAN 752,Traffic Control,852,15568,,,,Open,20,4,"Daniel, Janice R.",Online Virtual,3,,
 202710,TRAN 755,Intelligent Transportation Systems,102,15569,W,6:00 PM - 8:50 PM,KUPF 118,Open,25,0,"Lee, Joyoung",Face-To-Face,3,,
+202710,TRAN 765,Multi-modal Freight Transportation Systems Analysis,850,16133,,,,Open,20,0,"Spasovic, Lazar",Online Virtual,3,,
+202710,TRAN 765,Multi-modal Freight Transportation Systems Analysis,852,16134,,,,Open,20,0,"Spasovic, Lazar",Online Newark,3,,
 202710,TRAN 790A,Doctoral Dissertation,202,15570,,,,Open,19,0,"Lee, Joyoung",Face-To-Face,1,,
 202710,TRAN 790A,Doctoral Dissertation,203,15571,,,,Open,19,0,"Dimitrijevic, Branislav",Face-To-Face,1,,
 202710,TRAN 790A,Doctoral Dissertation,206,15572,,,,Open,19,0,"Bai, Yun",Face-To-Face,1,,
