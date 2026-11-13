@@ -1,5 +1,5 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,FIN 218,Financial Markets and Institutions,002,13292,TR,1:00 PM - 2:20 PM,CULM 110,Open,33,20,"Eliopoulos, George",Face-To-Face,3,,
+202710,FIN 218,Financial Markets and Institutions,002,13292,TR,1:00 PM - 2:20 PM,CULM 110,Open,33,21,"Eliopoulos, George",Face-To-Face,3,,
 202710,FIN 218,Financial Markets and Institutions,004,13293,MW,10:00 AM - 11:20 AM,FENS 550,Open,33,32,"Li, Jixing",Face-To-Face,3,,
 202710,FIN 218,Financial Markets and Institutions,102,13294,M,6:00 PM - 8:50 PM,FENS 440,Open,43,18,"Eliopoulos, George",Face-To-Face,3,,
 202710,FIN 218,Financial Markets and Institutions,104,13295,T,6:00 PM - 8:50 PM,CULM LECT 2,Open,43,16,,Face-To-Face,3,,
@@ -34,4 +34,4 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,FIN 620,Adv Financial Data Analytics,852,13323,,,,Open,30,5,"Uddin, Ajim",Online Virtual,3,,
 202710,FIN 624,Corporate Finance II,852,13324,,,,Open,30,13,"Goodwin, Kenneth A.",Online Virtual,3,,
 202710,FIN 626,Financial Investment Institutions,852,13325,,,,Open,30,9,"Kasmin, Richard R.",Online Virtual,3,,
-202710,FIN 650,Investment Analysis and Portfolio Theory,852,13326,,,,Open,30,12,"Goodwin, Kenneth A.",Online Virtual,3,,
+202710,FIN 650,Investment Analysis and Portfolio Theory,852,13326,,,,Open,30,13,"Goodwin, Kenneth A.",Online Virtual,3,,

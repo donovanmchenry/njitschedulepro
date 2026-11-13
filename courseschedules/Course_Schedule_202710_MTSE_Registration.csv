@@ -4,7 +4,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,MTSE 591,Grad Coop Work Experience II,792,14958,,,,Open,19,0,"Ravindra, N. M.",Face-To-Face,1,,
 202710,MTSE 591,Grad Coop Work Experience II,808,14959,,,,Open,19,0,"Tyson, Trevor A.",Face-To-Face,1,,
 202710,MTSE 593,Graduate Co-op Work Experience IV,796,14960,,,,Open,19,0,"Ahn, Keun Hyuk",Face-To-Face,0,,
-202710,MTSE 655,Diffusion and Solid State Kinetics,102,14961,M,6:00 PM - 8:50 PM,FMH 403,Open,25,0,"Jerez, Andres",Face-To-Face,3,,
+202710,MTSE 655,Diffusion and Solid State Kinetics,102,14961,M,6:00 PM - 8:50 PM,FMH 403,Open,25,1,"Jerez, Andres",Face-To-Face,3,,
 202710,MTSE 690,Directed Study in Materials Science and Engineering,796,14962,,,,Open,19,0,"Ahn, Keun Hyuk",Face-To-Face,3,,
 202710,MTSE 700B,Master's Project,445,14963,,,,Open,19,0,"Dave, Rajesh N.",Face-To-Face,3,,
 202710,MTSE 700B,Master's Project,792,14964,,,,Open,19,0,"Ravindra, N. M.",Face-To-Face,3,,
