@@ -1,5 +1,5 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,MIS 245,Introduction to Management Information Systems,002,14631,TF,10:00 AM - 11:20 AM,FENS 450,Open,43,15,"Kargar, Bahareh",Face-To-Face,3,,
+202710,MIS 245,Introduction to Management Information Systems,002,14631,TF,10:00 AM - 11:20 AM,FENS 450,Open,43,16,"Kargar, Bahareh",Face-To-Face,3,,
 202710,MIS 245,Introduction to Management Information Systems,004,14632,TF,2:30 PM - 3:50 PM,KUPF 203,Open,43,33,"Shohrab, Muntasir",Face-To-Face,3,,
 202710,MIS 245,Introduction to Management Information Systems,102,14633,M,6:00 PM - 8:50 PM,CAB 3052,Open,43,8,"Sylla, Cheickna",Face-To-Face,3,,
 202710,MIS 245,Introduction to Management Information Systems,452,14634,,,,Open,30,30,"Lovitch, Ira T.",Online Newark,3,,
@@ -17,4 +17,4 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,MIS 645,Information Technology and Competitive Advantage,102,14645,M,6:00 PM - 8:50 PM,CKB 124,Open,43,8,"Eljabiri, Osama",Hybrid,3,,
 202710,MIS 645,Information Technology and Competitive Advantage,852,14646,,,,Open,30,10,"Wolczynski, Nicholas",Online Virtual,3,,
 202710,MIS 645,Information Technology and Competitive Advantage,854,14647,,,,Open,30,12,"Eljabiri, Osama",Online Virtual,3,,
-202710,MIS 648,Decision Support Systems for Managers,852,14648,,,,Open,30,7,"Sylla, Cheickna",Online Virtual,3,,
+202710,MIS 648,Decision Support Systems for Managers,852,14648,,,,Open,30,8,"Sylla, Cheickna",Online Virtual,3,,
