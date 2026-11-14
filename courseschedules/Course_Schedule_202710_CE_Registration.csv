@@ -1,7 +1,7 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,CE 100,Introduction to Civil Engineering,002,10742,R,4:00 PM - 5:55 PM,COLT 416,Open,35,35,"Golon, Frank L.",Face-To-Face,1,,
+202710,CE 100,Introduction to Civil Engineering,002,10742,R,4:00 PM - 5:55 PM,COLT 416,Open,35,34,"Golon, Frank L.",Face-To-Face,1,,
 202710,CE 100,Introduction to Civil Engineering,004,10743,M,10:00 AM - 12:05 PM,COLT 416,Open,35,35,"Golon, Frank L.",Face-To-Face,1,,
-202710,CE 100,Introduction to Civil Engineering,006,10744,T,1:00 PM - 3:05 PM,COLT 416,Open,35,34,"Golon, Frank L.",Face-To-Face,1,,
+202710,CE 100,Introduction to Civil Engineering,006,10744,T,1:00 PM - 3:05 PM,COLT 416,Open,35,35,"Golon, Frank L.",Face-To-Face,1,,
 202710,CE 101,CE Computer Aided Design,002,10745,R,3:15 PM - 5:20 PM,FENS 160,Open,35,34,"Santos, Stephanie R.",Hybrid,1,,
 202710,CE 101,CE Computer Aided Design,006,10747,T,10:45 AM - 12:50 PM,FENS 160,Open,35,34,"Santos, Stephanie R.",Hybrid,1,,
 202710,CE 101,CE Computer Aided Design,008,16006,R,9:15 AM - 11:20 AM,FENS 160,Open,35,32,"Santos, Stephanie R.",Hybrid,1,,
@@ -121,7 +121,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,CE 614,Underground Construction,850,10853,,,,Open,20,20,"Slaughter, Alan R.",Online Virtual,3,,
 202710,CE 616,Construction Cost Estimating,850,10854,,,,Open,20,20,"Oraedu, Godson I.",Online Virtual,3,,
 202710,CE 619,Advanced Construction Technologies and Methods,102,10855,R,6:00 PM - 8:50 PM,TIER 105,Open,15,0,"Borges Rodrigues, Patrick",Face-To-Face,3,,
-202710,CE 620,Open Channel Flow,850,10856,,,,Open,20,20,"Prasad, Avinash",Online Virtual,3,,
+202710,CE 620,Open Channel Flow,850,10856,,,,Open,20,19,"Prasad, Avinash",Online Virtual,3,,
 202710,CE 628,Applications and Modeling of Innovative Structural Materials,102,10857,W,6:00 PM - 8:50 PM,KUPF 105,Open,20,4,"Bandelt, Matthew J.",Face-To-Face,3,,
 202710,CE 637,Short Span Bridge Design,850,10858,,,,Open,20,9,"Taher, Rima",Online Virtual,3,,
 202710,CE 643,Advanced Foundation Engineering,102,16007,R,6:00 PM - 8:50 PM,FMH 403,Open,20,5,"Arshid, Asif",Face-To-Face,3,,
