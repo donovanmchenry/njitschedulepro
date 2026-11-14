@@ -1,6 +1,6 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,M,8:30 AM - 10:35 AM,TIER 113,Open,30,4,"Wu, Yufei",Face-To-Face,3,,
-202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,W,8:30 AM - 10:35 AM,TIER 107,Open,30,4,"Wu, Yufei",Face-To-Face,3,,
+202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,M,8:30 AM - 10:35 AM,TIER 113,Open,30,5,"Wu, Yufei",Face-To-Face,3,,
+202710,SDET 101,Fundamentals of Software and Data Technologies,002,15491,W,8:30 AM - 10:35 AM,TIER 107,Open,30,5,"Wu, Yufei",Face-To-Face,3,,
 202710,SDET 101,Fundamentals of Software and Data Technologies,102,15492,T,6:00 PM - 10:05 PM,TIER 106,Open,30,6,"Perumalsamy, Anuradha",Face-To-Face,3,,
 202710,SDET 102,Applications of Software Engineering Technology,102,15493,W,6:00 PM - 10:05 PM,TIER 108,Open,30,30,"Iaboni, Craig S",Face-To-Face,3,,
 202710,SDET 201,Data Engineering,102,15494,M,6:00 PM - 10:05 PM,CKB 223,Open,30,13,,Face-To-Face,3,,
