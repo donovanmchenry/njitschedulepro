@@ -21,7 +21,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ME 304,Fluid Mechanics,102,14302,W,6:00 PM - 8:50 PM,CULM LECT 3,Open,65,65,"Alisafaei, Farid",Face-To-Face,3,,
 202710,ME 305,Introduction to System Dynamics,002,14303,WF,1:00 PM - 2:20 PM,FENS 440,Open,70,35,"Fischer, Ian S.",Face-To-Face,3,,
 202710,ME 305,Introduction to System Dynamics,102,14304,T,6:00 PM - 8:50 PM,FENS 510,Open,70,58,"Akhtar, Adeel",Face-To-Face,3,,
-202710,ME 311,Thermodynamics I,002,14305,MW,10:00 AM - 11:20 AM,CULM LECT 3,Open,65,31,"Padovan, Alberto",Face-To-Face,3,,
+202710,ME 311,Thermodynamics I,002,14305,MW,10:00 AM - 11:20 AM,CULM LECT 3,Open,65,32,"Padovan, Alberto",Face-To-Face,3,,
 202710,ME 311,Thermodynamics I,102,14306,W,6:00 PM - 8:50 PM,FENS 510,Open,65,63,"Ali, Abul",Face-To-Face,3,,
 202710,ME 312,Thermodynamics II,002,14307,F,8:30 AM - 11:20 AM,TIER LECT 2,Open,65,48,"Datta, Dibakar",Face-To-Face,3,,
 202710,ME 312,Thermodynamics II,102,14308,M,6:00 PM - 8:50 PM,CULM LECT 3,Open,65,65,"Datta, Dibakar",Face-To-Face,3,,
