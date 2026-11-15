@@ -53,7 +53,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,DS 681,Deep Learning for Computer Vision,102,12316,R,6:00 PM - 8:50 PM,CKB 212,Open,30,4,"Monogioudis, Pantelis",Hybrid,3,,
 202710,DS 681,Deep Learning for Computer Vision,102,12316,,,,Open,30,4,"Monogioudis, Pantelis",Hybrid,3,,
 202710,DS 681,Deep Learning for Computer Vision,852,12317,,,,Open,30,13,"Monogioudis, Pantelis",Online Virtual,3,,
-202710,DS 683,Graph Neural Networks,102,12318,W,6:00 PM - 8:50 PM,FMH 205,Open,25,5,"Xu, Mengjia",Face-To-Face,3,,
+202710,DS 683,Graph Neural Networks,102,12318,W,6:00 PM - 8:50 PM,FMH 205,Open,25,6,"Xu, Mengjia",Face-To-Face,3,,
 202710,DS 685,Artificial Intelligence for Robotics,852,12319,,,,Open,30,9,"Monogioudis, Pantelis",Online Virtual,3,,
 202710,DS 700B,Master's Project,146,12320,,,,Open,19,0,"Jin, Huiran",Face-To-Face,3,,
 202710,DS 700B,Master's Project,315,12321,,,,Open,19,0,"Ghosh, Arnob",Face-To-Face,3,,
