@@ -1,5 +1,5 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
-202710,IS 117,Introduction to Website Development ,002,13632,MW,11:30 AM - 12:50 PM,TIER 112,Open,35,26,"Chiusano, Mark S.",Face-To-Face,3,,
+202710,IS 117,Introduction to Website Development ,002,13632,MW,11:30 AM - 12:50 PM,TIER 112,Open,35,27,"Chiusano, Mark S.",Face-To-Face,3,,
 202710,IS 117,Introduction to Website Development ,004,13633,TF,1:00 PM - 2:20 PM,TIER 105,Open,35,4,"Ohshiro, Keita",Face-To-Face,3,,
 202710,IS 117,Introduction to Website Development ,008,16085,MW,1:00 PM - 2:20 PM,CKB 120,Open,35,8,,Face-To-Face,3,,
 202710,IS 218,Building Web Applications,002,13635,MR,8:30 AM - 9:50 AM,CKB 223,Open,35,21,"Licciardello, Thomas Rosario",Face-To-Face,3,,
@@ -110,8 +110,8 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,IS 676,Requirement Engineering,102,13736,W,6:00 PM - 8:50 PM,CKB 220,Open,15,1,"Kirova, Vassilka",Hybrid,3,,
 202710,IS 676,Requirement Engineering,102,13736,,,,Open,15,1,"Kirova, Vassilka",Hybrid,3,,
 202710,IS 676,Requirement Engineering,852,13737,,,,Open,15,2,"Kirova, Vassilka",Online Virtual,3,,
-202710,IS 681,Computer Security Auditing,852,13738,,,,Open,30,18,"Pak, Charles",Online Virtual,3,,
-202710,IS 684,Business Process Innovation,852,13739,,,,Open,30,9,"Casarella, Jerry",Online Virtual,3,,
+202710,IS 681,Computer Security Auditing,852,13738,,,,Open,30,19,"Pak, Charles",Online Virtual,3,,
+202710,IS 684,Business Process Innovation,852,13739,,,,Open,30,10,"Casarella, Jerry",Online Virtual,3,,
 202710,IS 688,Web Mining,002,13740,F,1:00 PM - 3:50 PM,KUPF 204,Open,15,0,"Lin, Lin",Hybrid,3,,
 202710,IS 688,Web Mining,002,13740,,,,Open,15,0,"Lin, Lin",Hybrid,3,,
 202710,IS 688,Web Mining,852,13741,,,,Open,15,0,"Lin, Lin",Online Virtual,3,,
