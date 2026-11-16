@@ -94,7 +94,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,IS 491,Senior Project - IS,594,16084,,,,Open,19,1,"Pradhan, Alisha",Face-To-Face,3,,
 202710,IS 591,Graduate Co-op Work Experience II,510,13724,,,,Open,19,0,"Wu, Brook Brook",Face-To-Face,1,,
 202710,IS 601,Python for Web API Development,002,13725,TR,11:30 AM - 12:50 PM,CKB 303,Open,40,1,"Licciardello, Thomas Rosario",Face-To-Face,3,,
-202710,IS 601,Python for Web API Development,852,13727,,,,Open,30,23,"Williams, Keith A.",Online Virtual,3,,
+202710,IS 601,Python for Web API Development,852,13727,,,,Open,30,22,"Williams, Keith A.",Online Virtual,3,,
 202710,IS 631,Enterprise Database Management,102,13728,F,6:00 PM - 8:50 PM,CKB 220,Open,15,2,"Lin, Lin",Hybrid,3,,
 202710,IS 631,Enterprise Database Management,102,13728,,,,Open,15,2,"Lin, Lin",Hybrid,3,,
 202710,IS 631,Enterprise Database Management,852,13729,,,,Open,15,9,"Lin, Lin",Online Virtual,3,,
