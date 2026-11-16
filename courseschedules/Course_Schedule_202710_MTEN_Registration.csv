@@ -80,7 +80,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,MTEN 492,Research and Independent Study II,486,14757,,,,Open,19,0,"Khusid, Boris",Face-To-Face,3,,
 202710,MTEN 492,Research and Independent Study II,487,14758,,,,Open,19,0,"Dreyzin, Edward L.",Face-To-Face,3,,
 202710,MTEN 613,Characterization of Materials,102,14759,R,6:00 PM - 8:50 PM,TIER 109,Open,30,2,"Schoenitz, Mirko",Face-To-Face,3,,
-202710,MTEN 633,Machine Learning for Engineers,852,14760,,,,Open,30,1,"Dave, Rajesh N.",Online Virtual,3,,
+202710,MTEN 633,Machine Learning for Engineers,852,14760,,,,Open,30,2,"Dave, Rajesh N.",Online Virtual,3,,
 202710,MTEN 700B,Master's Project,071,14761,,,,Open,19,0,"Sirkar, Kamalesh K.",Face-To-Face,3,,
 202710,MTEN 700B,Master's Project,080,14762,,,,Open,19,0,"Armenante, Piero M.",Face-To-Face,3,,
 202710,MTEN 700B,Master's Project,081,14763,,,,Open,19,0,"Baltzis, Basil C.",Face-To-Face,3,,
