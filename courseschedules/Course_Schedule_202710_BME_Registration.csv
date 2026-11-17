@@ -124,7 +124,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,BME 498,ST: Biomedical Research: Design,102,10605,T,6:00 PM - 8:50 PM,FENS 606,Open,15,3,"Li, Ying",Face-To-Face,3,,
 202710,BME 590,Graduate Co-Op Work Exper I,113,10606,,,,Open,19,0,"Cecen, Berivan",Face-To-Face,1,,
 202710,BME 593,Graduate Co-op Work Experience IV,113,10607,,,,Open,19,0,"Cecen, Berivan",Face-To-Face,0,,
-202710,BME 601,Seminar,002,10608,F,11:30 AM - 12:50 PM,FENS 510,Open,19,1,"Chattaraj, Rajarshi",Face-To-Face,1,,
+202710,BME 601,Seminar,002,10608,F,11:30 AM - 12:50 PM,FENS 510,Open,19,2,"Chattaraj, Rajarshi",Face-To-Face,1,,
 202710,BME 651,Principles of Tissue Engineering,102,10609,T,6:00 PM - 8:50 PM,TIER LECT 1,Open,20,18,"Grasman, Jonathan M.",Face-To-Face,3,,
 202710,BME 652,Cellular and Molecular Tissue Engineering,852,10610,,,,Open,20,20,"Simon, Joshua L.",Online Virtual,3,,
 202710,BME 656,Research Skills in Stem Cell,102,10611,M,6:00 PM - 8:50 PM,TIER 113,Open,20,8,"Lee, Eunjung Alice",Face-To-Face,3,,
