@@ -38,7 +38,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ECET 395,Co-op Work Experience I,353,16148,,,,Open,19,0,,Face-To-Face,3,,
 202710,ECET 400,Senior Project,102,12813,W,6:00 PM - 10:05 PM,GITC 1404,Open,25,25,"Blinder, Alex",Face-To-Face,3,,
 202710,ECET 400,Senior Project,104,12814,F,6:00 PM - 10:05 PM,KUPF 105,Open,25,3,"Blinder, Alex",Face-To-Face,3,,
-202710,ECET 411,Embedded Systems II,002,12815,MW,11:30 AM - 1:35 PM,GITC 2308,Open,20,6,"Iaboni, Craig S",Face-To-Face,3,,
+202710,ECET 411,Embedded Systems II,002,12815,MW,11:30 AM - 1:35 PM,GITC 2308,Open,20,6,,Face-To-Face,3,,
 202710,ECET 411,Embedded Systems II,102,12816,W,6:00 PM - 10:05 PM,GITC 2308,Open,20,17,"Awad, Majd",Face-To-Face,3,,
 202710,ECET 412,Power Generation and Distribution,102,12817,T,6:00 PM - 7:55 PM,FMH 404,Open,20,20,"Vincent, Michael John",Face-To-Face,3,,
 202710,ECET 412,Power Generation and Distribution,102,12817,T,8:05 PM - 10:00 PM,FMH 109,Open,20,20,"Vincent, Michael John",Face-To-Face,3,,
