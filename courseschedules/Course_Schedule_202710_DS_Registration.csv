@@ -39,7 +39,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,DS 637,Python and Mathematics for Machine Learning,854,12300,,,,Open,0,0,"Li, Daming",Online Virtual,3,,
 202710,DS 642,Applications of Parallel Computing,102,12301,M,6:00 PM - 8:50 PM,CKB 114,Open,25,7,"Bader, David A.",Face-To-Face,3,,
 202710,DS 644,Introduction to Big Data,002,12302,F,1:00 PM - 3:50 PM,CKB 222,Open,30,5,"Li, Yajuan",Face-To-Face,3,,
-202710,DS 644,Introduction to Big Data,852,12304,,,,Open,30,30,"Li, Yajuan",Online Virtual,3,,
+202710,DS 644,Introduction to Big Data,852,12304,,,,Open,30,29,"Li, Yajuan",Online Virtual,3,,
 202710,DS 644,Introduction to Big Data,854,12305,,,,Open,30,6,"Li, Yajuan",Online Virtual,3,,
 202710,DS 650,Data Visualization and Interpretation,002,16008,MR,11:30 AM - 12:50 PM,FMH 309,Open,30,1,"Islam, Akm Z",Face-To-Face,3,,
 202710,DS 650,Data Visualization and Interpretation,852,12307,,,,Open,30,30,"Dasgupta, Aritra",Online Virtual,3,,
