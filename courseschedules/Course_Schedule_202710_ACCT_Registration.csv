@@ -1,6 +1,6 @@
 Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Delivery Mode,Credits,Info,Comments
 202710,ACCT 115,Fundamentals of Financial Accounting ,002,10001,TR,11:30 AM - 12:50 PM,KUPF 106,Open,43,19,"Li, Nichole",Face-To-Face,3,,
-202710,ACCT 115,Fundamentals of Financial Accounting ,004,10002,TF,2:30 PM - 3:50 PM,KUPF 202,Open,43,19,"Ma, Yue",Face-To-Face,3,,
+202710,ACCT 115,Fundamentals of Financial Accounting ,004,10002,TF,2:30 PM - 3:50 PM,KUPF 202,Open,43,18,"Ma, Yue",Face-To-Face,3,,
 202710,ACCT 115,Fundamentals of Financial Accounting ,006,10003,MW,8:30 AM - 9:50 AM,KUPF 206,Open,43,16,"Taylor, Ming Fang",Face-To-Face,3,,
 202710,ACCT 115,Fundamentals of Financial Accounting ,102,10004,W,6:00 PM - 8:50 PM,WEST LECT 2,Open,43,13,"Li, Nichole",Face-To-Face,3,,
 202710,ACCT 117,Principles Of Fin Accountng,002,10005,TR,2:30 PM - 3:50 PM,CULM LECT 1,Open,43,33,"Derbaly, George",Face-To-Face,3,,
@@ -16,5 +16,5 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ACCT 490,Independent Study in Acct,887,10013,,,,Open,19,0,"Tamke, William R.",Face-To-Face,3,,
 202710,ACCT 615,Management Accounting,102,10014,R,6:00 PM - 8:50 PM,CULM LECT 1,Open,43,5,"Taylor, Ming Fang",Hybrid,3,,
 202710,ACCT 615,Management Accounting,852,10015,,,,Open,30,24,"Ma, Yue",Online Virtual,3,,
-202710,ACCT 615,Management Accounting,854,10016,,,,Open,30,11,"Micale, Joseph A",Online Virtual,3,,
+202710,ACCT 615,Management Accounting,854,10016,,,,Open,30,12,"Micale, Joseph A",Online Virtual,3,,
 202710,ACCT 640,Big Data Analytics for Accounting,852,10017,,,,Open,30,10,"Li, Nichole",Online Virtual,3,,

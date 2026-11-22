@@ -51,7 +51,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ECE 381,Introduction to Applied Machine Learning,006,12516,F,3:15 PM - 5:20 PM,FMH 318,Open,30,10,"Han, Tao",Face-To-Face,3,,
 202710,ECE 395,Microprocessor Laboratory,002,12517,T,11:30 AM - 3:50 PM,FMH 211,Open,36,18,,Face-To-Face,2,,
 202710,ECE 395,Microprocessor Laboratory,102,12518,M,6:00 PM - 10:05 PM,FMH 204A,Open,36,36,,Face-To-Face,2,,
-202710,ECE 395,Microprocessor Laboratory,104,12519,M,6:00 PM - 10:05 PM,FMH 211,Open,36,26,"Bhavnagarwala, Azeez J",Face-To-Face,2,,
+202710,ECE 395,Microprocessor Laboratory,104,12519,M,6:00 PM - 10:05 PM,FMH 211,Open,36,27,"Bhavnagarwala, Azeez J",Face-To-Face,2,,
 202710,ECE 405,Electrical Engineering Principles,002,12520,MR,2:30 PM - 3:50 PM,TIER LECT 2,Open,130,101,,Face-To-Face,3,,
 202710,ECE 414,Electrical and Computer Engineering Project I,002,12521,W,11:30 AM - 12:30 PM,ECEC 115,Open,50,41,"Tsybeskov, Leonid",Face-To-Face,1,,
 202710,ECE 414,ELECT & COMP ENGR PROJECT I - HONORS,HM2,12522,W,11:30 AM - 12:30 PM,ECEC 115,Open,10,3,"Tsybeskov, Leonid",Face-To-Face,1,,
