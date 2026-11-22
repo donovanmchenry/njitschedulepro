@@ -224,7 +224,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,MATH 725,Independent Study I,740,14224,,,,Open,19,0,"Oza, Anand U",Face-To-Face,3,,
 202710,MATH 725,Independent Study I,745,14225,,,,Open,19,0,"Nadim, Farzan",Face-To-Face,3,,
 202710,MATH 725,Independent Study I,771,14226,,,,Open,19,0,"Subramanian, Sundarraman",Face-To-Face,3,,
-202710,MATH 745,Analysis II,002,14227,TR,10:00 AM - 11:20 AM,CKB 206,Open,25,0,"Shirokoff, David G.",Face-To-Face,3,,
+202710,MATH 745,Analysis II,002,14227,TR,10:00 AM - 11:20 AM,CKB 206,Open,25,1,"Shirokoff, David G.",Face-To-Face,3,,
 202710,MATH 790A,Doct Dissertation & Res,693,14228,,,,Open,19,0,"Afkhami, Shahriar",Face-To-Face,1,,
 202710,MATH 790A,Doct Dissertation & Res,701,14229,,,,Open,19,0,"Diekman, Casey O.",Face-To-Face,1,,
 202710,MATH 790A,Doct Dissertation & Res,702,14230,,,,Open,19,0,"Shirokoff, David G.",Face-To-Face,1,,
