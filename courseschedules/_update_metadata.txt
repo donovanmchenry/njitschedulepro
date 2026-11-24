@@ -1,5 +1,5 @@
-Last Updated: 2026-11-24T04:31:13.615693
+Last Updated: 2026-11-24T19:12:32.187599
 Term: 202710
-Sections: 5877
+Sections: 5873
 Subjects: 82
 Update Method: NJIT public registration search API
