@@ -38,7 +38,7 @@ Term,Course,Title,Section,CRN,Days,Times,Location,Status,Max,Now,Instructor,Deli
 202710,ENGR 222,Introduction to Wood Working,006,15654,R,12:15 PM - 2:20 PM,GITC 1403,Closed,8,8,"Birnbaum, Danny",Hybrid,1,,
 202710,ENGR 222,Introduction to Wood Working,008,15678,R,12:15 PM - 2:20 PM,GITC 1403,Closed,8,8,"Birnbaum, Danny",Hybrid,1,,
 202710,ENGR 222,Introduction to Wood Working,010,15655,F,1:00 PM - 3:05 PM,GITC 1403,Closed,8,8,"Birnbaum, Danny",Hybrid,1,,
-202710,ENGR 222,Introduction to Wood Working,012,15679,F,1:00 PM - 3:05 PM,GITC 1403,Open,8,6,"Birnbaum, Danny",Hybrid,1,,
+202710,ENGR 222,Introduction to Wood Working,012,15679,F,1:00 PM - 3:05 PM,GITC 1403,Open,8,5,"Birnbaum, Danny",Hybrid,1,,
 202710,ENGR 223,Introduction to CNC Routing,102,15656,M,6:00 PM - 8:50 PM,GITC 1222,Closed,8,8,"Suriano, Justin T",Hybrid,1,,
 202710,ENGR 223,Introduction to CNC Routing,104,15680,M,6:00 PM - 8:50 PM,GITC 1222,Open,8,1,"Suriano, Justin T",Hybrid,1,,
 202710,ENGR 223,Introduction to CNC Routing,106,15657,R,6:00 PM - 8:50 PM,GITC 1222,Closed,8,8,"Adomako, Emmanuel",Hybrid,1,,
